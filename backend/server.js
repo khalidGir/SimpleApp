@@ -36,7 +36,7 @@ app.post('/check', async (req, res) => {
         });
     }
 
-    const { url } = req.body;
+    const { url, name } = req.body;
 
     if (!url || typeof url !== 'string' || !url.startsWith('https://')) {
         return res.status(400).json({ error: 'Invalid URL. Must start with https://' });
@@ -48,6 +48,8 @@ app.post('/check', async (req, res) => {
         const duration = Date.now() - start;
 
         res.json({
+            name: name || 'Manual Check',
+            success: response.ok,
             status: response.status,
             responseTimeMs: duration,
             timestamp: new Date().toISOString()
