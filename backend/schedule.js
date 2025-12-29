@@ -2,33 +2,36 @@ const cron = require('node-cron');
 const { sendAlert } = require('./alerts');
 
 // In-memory store for URLs
-const monitoredUrls = new Set();
+const monitoredUrls = [
+  {
+    name: 'Self health',
+    url: 'https://simpleapp-gp8l.onrender.com/health'
+  }
+];
 
-const addUrl = (url) => {
-    monitoredUrls.add(url);
+const addUrl = (url, name = 'Manual Check') => {
+    monitoredUrls.push({ name, url });
     console.log(`Added ${url} to monitoring list.`);
 };
 
 const getUrls = () => {
-    return Array.from(monitoredUrls);
+    return monitoredUrls;
 };
 
-const checkUrl = async (url) => {
+const checkUrl = async (entry) => {
+    const { url, name } = entry;
     const start = Date.now();
     try {
         const response = await fetch(url);
         const duration = Date.now() - start;
 
         if (!response.ok) {
-            await sendAlert(url, `Status Failure: ${response.status}`, `The URL returned status code ${response.status}. Response time: ${duration}ms.`);
+            await sendAlert(url, `Status Failure (${name}): ${response.status}`, `The URL returned status code ${response.status}. Response time: ${duration}ms.`);
         } else if (duration > 1000) {
-            await sendAlert(url, `High Latency: ${duration}ms`, `The URL took ${duration}ms to respond, which exceeds the 1000ms threshold.`);
-        } else {
-            // Healthy, no action needed
-            // console.log(`Checked ${url}: OK (${duration}ms)`);
+            await sendAlert(url, `High Latency (${name}): ${duration}ms`, `The URL took ${duration}ms to respond, which exceeds the 1000ms threshold.`);
         }
     } catch (error) {
-        await sendAlert(url, `Network Error`, `Failed to fetch URL. Error: ${error.message}`);
+        await sendAlert(url, `Network Error (${name})`, `Failed to fetch URL. Error: ${error.message}`);
     }
 };
 
@@ -42,8 +45,8 @@ const startScheduler = () => {
             return;
         }
 
-        for (const url of urls) {
-            await checkUrl(url);
+        for (const entry of urls) {
+            await checkUrl(entry);
         }
     });
     console.log('Scheduler started: Checks every 5 minutes.');
