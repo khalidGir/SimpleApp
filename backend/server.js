@@ -49,6 +49,7 @@ app.post('/check', async (req, res) => {
 
         res.json({
             name: name || 'Manual Check',
+            url: url,
             success: response.ok,
             status: response.status,
             responseTimeMs: duration,
