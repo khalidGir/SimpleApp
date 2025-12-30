@@ -5,7 +5,7 @@ const { sendAlert } = require('./alerts');
 const monitoredUrls = [
   {
     name: 'Self health',
-    url: 'https://simpleapp-gp8l.onrender.com/health-broken'
+    url: 'https://simpleapp-gp8l.onrender.com/health'
   }
 ];
 
