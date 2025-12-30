@@ -40,6 +40,7 @@ app.post('/check', async (req, res) => {
     }
 
     const { url, name } = req.body;
+    const checkName = name || 'Manual Check';
 
     if (!url || typeof url !== 'string' || !url.startsWith('https://')) {
         return res.status(400).json({ error: 'Invalid URL. Must start with https://' });
@@ -49,9 +50,8 @@ app.post('/check', async (req, res) => {
     try {
         const response = await fetch(url);
         const duration = Date.now() - start;
-        const success = response.ok;
         const status = response.status;
-        const checkName = name || 'Manual Check';
+        const success = status >= 200 && status < 300;
 
         if (!success) {
             await sendAlert(
@@ -70,38 +70,22 @@ app.post('/check', async (req, res) => {
             timestamp: new Date().toISOString()
         });
     } catch (error) {
-        const checkName = name || 'Manual Check';
+        const duration = Date.now() - start;
         await sendAlert(
             url,
             `ALERT: ${checkName} Network Error`,
             `URL: ${url}\nError: ${error.message}\nTime: ${new Date().toISOString()}`
         );
         
-        res.status(500).json({
-            error: 'Failed to fetch URL',
-            details: error.message,
-            timestamp: new Date().toISOString()
+        res.json({
+            name: checkName,
+            url: url,
+            success: false,
+            status: "error",
+            responseTimeMs: duration,
+            timestamp: new Date().toISOString(),
+            error: error.message
         });
-    }
-});
-
-app.get('/test-email', async (req, res) => {
-    try {
-        if (!process.env.RESEND_API_KEY || !process.env.ALERT_EMAIL) {
-            return res.status(400).json({ ok: false, error: 'Resend API Key or Alert Email not set' });
-        }
-
-        await resend.emails.send({
-            from: 'SimpleApp <onboarding@resend.dev>',
-            to: process.env.ALERT_EMAIL,
-            subject: 'SimpleApp test email',
-            text: 'Email system (Resend) is working.',
-        });
-
-        res.json({ ok: true });
-    } catch (error) {
-        console.error('Email test failed:', error);
-        res.status(500).json({ ok: false, error: error.message });
     }
 });
 
