@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { Resend } = require('resend');
 const { addUrl, startScheduler } = require('./schedule');
+const { sendAlert } = require('./alerts');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -48,16 +49,34 @@ app.post('/check', async (req, res) => {
     try {
         const response = await fetch(url);
         const duration = Date.now() - start;
+        const success = response.ok;
+        const status = response.status;
+        const checkName = name || 'Manual Check';
+
+        if (!success) {
+            await sendAlert(
+                url,
+                `ALERT: ${checkName} is DOWN`,
+                `URL: ${url}\nStatus: ${status}\nTime: ${new Date().toISOString()}`
+            );
+        }
 
         res.json({
-            name: name || 'Manual Check',
+            name: checkName,
             url: url,
-            success: response.ok,
-            status: response.status,
+            success: success,
+            status: status,
             responseTimeMs: duration,
             timestamp: new Date().toISOString()
         });
     } catch (error) {
+        const checkName = name || 'Manual Check';
+        await sendAlert(
+            url,
+            `ALERT: ${checkName} Network Error`,
+            `URL: ${url}\nError: ${error.message}\nTime: ${new Date().toISOString()}`
+        );
+        
         res.status(500).json({
             error: 'Failed to fetch URL',
             details: error.message,
