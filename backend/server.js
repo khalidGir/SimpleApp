@@ -1,10 +1,11 @@
 const express = require('express');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const { addUrl, startScheduler } = require('./schedule');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.use(cors());
 app.use(express.json());
@@ -67,21 +68,15 @@ app.post('/check', async (req, res) => {
 
 app.get('/test-email', async (req, res) => {
     try {
-        const transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT,
-            secure: false, // true for 465, false for other ports
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
+        if (!process.env.RESEND_API_KEY || !process.env.ALERT_EMAIL) {
+            return res.status(400).json({ ok: false, error: 'Resend API Key or Alert Email not set' });
+        }
 
-        await transporter.sendMail({
-            from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-            to: process.env.EMAIL_USER,
+        await resend.emails.send({
+            from: 'SimpleApp <onboarding@resend.dev>',
+            to: process.env.ALERT_EMAIL,
             subject: 'SimpleApp test email',
-            text: 'Email system is working.',
+            text: 'Email system (Resend) is working.',
         });
 
         res.json({ ok: true });
