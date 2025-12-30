@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const nodemailer = require('nodemailer');
 const { addUrl, startScheduler } = require('./schedule');
 
 const app = express();
@@ -61,6 +62,32 @@ app.post('/check', async (req, res) => {
             details: error.message,
             timestamp: new Date().toISOString()
         });
+    }
+});
+
+app.get('/test-email', async (req, res) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            host: process.env.EMAIL_HOST,
+            port: process.env.EMAIL_PORT,
+            secure: false, // true for 465, false for other ports
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+            to: process.env.EMAIL_USER,
+            subject: 'SimpleApp test email',
+            text: 'Email system is working.',
+        });
+
+        res.json({ ok: true });
+    } catch (error) {
+        console.error('Email test failed:', error);
+        res.status(500).json({ ok: false, error: error.message });
     }
 });
 
