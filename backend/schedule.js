@@ -1,21 +1,28 @@
 const cron = require('node-cron');
 const { sendAlert } = require('./alerts');
+const { pool } = require('./db');
 
-// In-memory store for URLs
-const monitoredUrls = [
-  {
-    name: 'Self health',
-    url: 'https://simpleapp-gp8l.onrender.com/health'
-  }
-];
-
-const addUrl = (url, name = 'Manual Check') => {
-    monitoredUrls.push({ name, url });
-    console.log(`Added ${url} to monitoring list.`);
+const addUrl = async (url, name = 'Manual Check', userId = null) => {
+    try {
+        const query = 'INSERT INTO monitored_urls (name, url, user_id) VALUES ($1, $2, $3) RETURNING *';
+        const values = [name, url, userId];
+        const res = await pool.query(query, values);
+        console.log(`Added ${url} to monitoring list (DB).`);
+        return res.rows[0];
+    } catch (err) {
+        console.error('Error adding URL to DB:', err);
+        throw err;
+    }
 };
 
-const getUrls = () => {
-    return monitoredUrls;
+const getUrls = async () => {
+    try {
+        const res = await pool.query('SELECT * FROM monitored_urls WHERE active = true');
+        return res.rows;
+    } catch (err) {
+        console.error('Error fetching URLs from DB:', err);
+        return [];
+    }
 };
 
 const checkUrl = async (entry) => {
@@ -39,7 +46,7 @@ const startScheduler = () => {
     // Schedule task to run every 5 minutes
     cron.schedule('*/5 * * * *', async () => {
         console.log('Running scheduled checks...');
-        const urls = getUrls();
+        const urls = await getUrls();
         if (urls.length === 0) {
             console.log('No URLs to monitor.');
             return;

@@ -3,6 +3,8 @@ const cors = require('cors');
 const { Resend } = require('resend');
 const { addUrl, startScheduler } = require('./schedule');
 const { sendAlert } = require('./alerts');
+const { initDb, createUser, findUserByEmail, getUserUrls } = require('./db');
+const { hashPassword, comparePassword, generateToken, authenticateToken } = require('./auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -11,8 +13,62 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 app.use(cors());
 app.use(express.json());
 
-// Start the cron scheduler
+// Initialize DB and start scheduler
+initDb();
 startScheduler();
+
+app.get('/urls', authenticateToken, async (req, res) => {
+    try {
+        const urls = await getUserUrls(req.user.userId);
+        res.json(urls);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch URLs' });
+    }
+});
+
+app.post('/register', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    try {
+        const existingUser = await findUserByEmail(email);
+        if (existingUser) {
+            return res.status(400).json({ error: 'User already exists' });
+        }
+
+        const hashedPassword = await hashPassword(password);
+        const user = await createUser(email, hashedPassword);
+        res.status(201).json({ message: 'User created successfully', user: { id: user.id, email: user.email } });
+    } catch (error) {
+        res.status(500).json({ error: 'Registration failed', details: error.message });
+    }
+});
+
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    try {
+        const user = await findUserByEmail(email);
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid credentials' });
+        }
+
+        const isMatch = await comparePassword(password, user.password_hash);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Invalid credentials' });
+        }
+
+        const token = generateToken(user);
+        res.json({ message: 'Login successful', token });
+    } catch (error) {
+        res.status(500).json({ error: 'Login failed', details: error.message });
+    }
+});
 
 app.get('/health', (req, res) => {
     res.json({
@@ -21,17 +77,22 @@ app.get('/health', (req, res) => {
     });
 });
 
-app.post('/add-url', (req, res) => {
+app.post('/add-url', authenticateToken, async (req, res) => {
     const { url } = req.body;
     if (!url || typeof url !== 'string' || !url.startsWith('https://')) {
         return res.status(400).json({ error: 'Invalid URL. Must start with https://' });
     }
     
-    addUrl(url);
-    res.json({ message: 'URL added to monitoring list', url });
+    try {
+        // Assuming default name for now, or could accept from body
+        await addUrl(url, 'User Monitored', req.user.userId);
+        res.json({ message: 'URL added to monitoring list', url });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to add URL to database' });
+    }
 });
 
-app.post('/check', async (req, res) => {
+app.post('/check', authenticateToken, async (req, res) => {
     if (process.env.ENABLE_CHECK_ENDPOINT !== 'true') {
         return res.status(403).json({ 
             error: 'Check endpoint is disabled', 
