@@ -31,6 +31,15 @@ const initDb = async () => {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='monitored_urls' AND column_name='user_id') THEN
             ALTER TABLE monitored_urls ADD COLUMN user_id INT REFERENCES users(id);
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='monitored_urls' AND column_name='last_status') THEN
+            ALTER TABLE monitored_urls ADD COLUMN last_status BOOLEAN DEFAULT TRUE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='monitored_urls' AND column_name='last_alert_sent_at') THEN
+            ALTER TABLE monitored_urls ADD COLUMN last_alert_sent_at TIMESTAMP;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='monitored_urls' AND column_name='last_response_time_ms') THEN
+            ALTER TABLE monitored_urls ADD COLUMN last_response_time_ms INTEGER;
+        END IF;
     END
     $$;
   `;

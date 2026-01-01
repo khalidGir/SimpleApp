@@ -1,6 +1,25 @@
 const API_BASE = 'https://simpleapp-gp8l.onrender.com';
 
 /**
+ * Helper to handle fetch responses and errors.
+ */
+const handleResponse = async (response) => {
+  let data;
+  try {
+    data = await response.json();
+  } catch (err) {
+    // If JSON parsing fails (e.g. 502/503 HTML from proxy), treat as service error
+    throw new Error('Service unavailable, please try again later.');
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || `Request failed with status ${response.status}`);
+  }
+
+  return data;
+};
+
+/**
  * Wrapper for fetch that handles auth headers and errors.
  * @param {string} endpoint - The API endpoint (e.g., '/urls').
  * @param {object} options - Fetch options.
@@ -30,14 +49,11 @@ export const authFetch = async (endpoint, options = {}) => {
       throw new Error('Session expired. Please login again.');
     }
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || `Request failed with status ${response.status}`);
-    }
-
-    return data;
+    return await handleResponse(response);
   } catch (error) {
+    if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+      throw new Error('Service unavailable, please try again later.');
+    }
     throw error;
   }
 };
@@ -51,16 +67,17 @@ export const publicFetch = async (endpoint, options = {}) => {
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || `Request failed with status ${response.status}`);
+    return await handleResponse(response);
+  } catch (error) {
+    if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+      throw new Error('Service unavailable, please try again later.');
+    }
+    throw error;
   }
-
-  return data;
 };
