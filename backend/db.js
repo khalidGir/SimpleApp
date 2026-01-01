@@ -40,12 +40,32 @@ const initDb = async () => {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='monitored_urls' AND column_name='last_response_time_ms') THEN
             ALTER TABLE monitored_urls ADD COLUMN last_response_time_ms INTEGER;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='monitored_urls' AND column_name='last_checked_at') THEN
+            ALTER TABLE monitored_urls ADD COLUMN last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+        END IF;
+    END
+    $$;
+  `;
+
+  const alterUsersTable = `
+    DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='plan') THEN
+            ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='max_urls') THEN
+            ALTER TABLE users ADD COLUMN max_urls INTEGER DEFAULT 5;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='check_interval_seconds') THEN
+            ALTER TABLE users ADD COLUMN check_interval_seconds INTEGER DEFAULT 300;
+        END IF;
     END
     $$;
   `;
 
   try {
     await pool.query(createUsersTable);
+    await pool.query(alterUsersTable);
     await pool.query(createMonitoredUrlsTable);
     await pool.query(alterMonitoredUrlsTable);
     console.log('Database initialized: tables checked/created.');
@@ -55,7 +75,11 @@ const initDb = async () => {
 };
 
 const createUser = async (email, passwordHash) => {
-  const query = 'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, created_at';
+  const query = `
+    INSERT INTO users (email, password_hash, plan, max_urls, check_interval_seconds) 
+    VALUES ($1, $2, 'free', 5, 300) 
+    RETURNING id, email, plan, max_urls, created_at
+  `;
   const values = [email, passwordHash];
   const res = await pool.query(query, values);
   return res.rows[0];

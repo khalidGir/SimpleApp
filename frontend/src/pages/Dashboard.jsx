@@ -7,7 +7,7 @@ function Dashboard() {
   const [newUrl, setNewUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [addLoading, setAddLoading] = useState(false);
-  const [checkLoading, setCheckLoading] = useState(null); // URL that is being checked
+  const [checkLoading, setCheckLoading] = useState(null);
   const [error, setError] = useState(null);
   const [addError, setAddError] = useState(null);
   const navigate = useNavigate();
@@ -21,8 +21,6 @@ function Dashboard() {
       const data = await authFetch('/urls');
       setUrls(data);
     } catch (err) {
-      // If error is strictly session related, authFetch redirects.
-      // Otherwise, show error.
       setError(err.message);
     } finally {
       setLoading(false);
@@ -41,7 +39,7 @@ function Dashboard() {
       });
 
       setNewUrl('');
-      fetchUrls(); // Refresh list
+      fetchUrls();
     } catch (err) {
       setAddError(err.message);
     } finally {
@@ -57,6 +55,7 @@ function Dashboard() {
             body: JSON.stringify({ url })
         });
         alert(`Check Result:\nStatus: ${result.status}\nResponse Time: ${result.responseTimeMs}ms\nSuccess: ${result.success}`);
+        fetchUrls(); // Refresh status on the card
     } catch (e) {
         alert('Check failed: ' + e.message);
     } finally {
@@ -64,32 +63,43 @@ function Dashboard() {
     }
   };
 
+  const getLatencyLabel = (ms) => {
+    if (!ms) return 'N/A';
+    if (ms < 150) return `${ms}ms (Fast)`;
+    if (ms < 500) return `${ms}ms (OK)`;
+    return `${ms}ms (Slow)`;
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return (
+    <div style={{ textAlign: 'center', marginTop: '100px', fontFamily: 'Arial' }}>
+      <h2>Loading URLs...</h2>
+    </div>
+  );
 
   return (
-    <div style={{ maxWidth: '800px', margin: '50px auto', padding: '20px' }}>
+    <div style={{ maxWidth: '800px', margin: '50px auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h1>Dashboard</h1>
+        <h1 style={{ margin: 0, color: '#333' }}>SimpleApp Monitor</h1>
         <button onClick={handleLogout} style={{ padding: '8px 16px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
           Logout
         </button>
       </div>
 
-      <div style={{ marginBottom: '40px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-        <h3>Add New URL</h3>
-        {addError && <div style={{ color: 'red', marginBottom: '10px' }}>{addError}</div>}
+      <div style={{ marginBottom: '40px', padding: '25px', backgroundColor: '#f9f9f9', borderRadius: '12px', border: '1px solid #eee' }}>
+        <h3 style={{ marginTop: 0 }}>Add New Service</h3>
+        {addError && <div style={{ color: 'red', marginBottom: '15px', padding: '10px', backgroundColor: '#fff5f5', borderRadius: '4px', fontSize: '14px' }}>{addError}</div>}
         <form onSubmit={handleAddUrl} style={{ display: 'flex', gap: '10px' }}>
           <input
             type="text"
             value={newUrl}
             onChange={(e) => setNewUrl(e.target.value)}
             placeholder="https://example.com"
-            style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+            style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px' }}
             required
             disabled={addLoading}
           />
@@ -97,12 +107,13 @@ function Dashboard() {
             type="submit" 
             disabled={addLoading}
             style={{ 
-              padding: '10px 20px', 
+              padding: '12px 24px', 
               backgroundColor: addLoading ? '#ccc' : '#0070f3', 
               color: 'white', 
               border: 'none', 
-              borderRadius: '4px', 
-              cursor: addLoading ? 'not-allowed' : 'pointer' 
+              borderRadius: '6px', 
+              cursor: addLoading ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold'
             }}
           >
             {addLoading ? 'Adding...' : 'Add URL'}
@@ -111,36 +122,75 @@ function Dashboard() {
       </div>
 
       <div>
-        <h3>Your Monitored URLs</h3>
-        {error && <div style={{ color: 'red' }}>{error}</div>}
+        <h3 style={{ color: '#555', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Monitored Services</h3>
+        {error && <div style={{ color: 'red', marginBottom: '20px' }}>{error}</div>}
+        
         {urls.length === 0 ? (
-          <p>No URLs added yet.</p>
+          <div style={{ textAlign: 'center', color: '#888', padding: '40px' }}>
+            No URLs added yet. Start by adding one above.
+          </div>
         ) : (
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {urls.map((item) => (
-              <li key={item.id} style={{ padding: '15px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <strong>{item.name || 'URL'}</strong>
-                  <div style={{ color: '#666', fontSize: '14px' }}>{item.url}</div>
-                  <div style={{ fontSize: '12px', color: '#999', marginTop: '5px' }}>Added: {new Date(item.created_at).toLocaleDateString()}</div>
+          <div style={{ display: 'grid', gap: '15px' }}>
+            {urls.map((item) => {
+              const isChecking = checkLoading === item.url;
+              return (
+                <div key={item.id} style={{ 
+                  padding: '20px', 
+                  borderRadius: '10px', 
+                  border: '1px solid #ddd', 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                  backgroundColor: 'white'
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                      <strong style={{ fontSize: '18px' }}>{item.name || 'Service'}</strong>
+                      {isChecking ? (
+                        <span style={{ fontSize: '12px', padding: '3px 8px', backgroundColor: '#eee', borderRadius: '12px', color: '#666' }}>CHECKING...</span>
+                      ) : (
+                        <span style={{ 
+                          fontSize: '12px', 
+                          padding: '3px 8px', 
+                          backgroundColor: item.last_status ? '#e6fffa' : '#fff5f5', 
+                          color: item.last_status ? '#28a745' : '#dc3545', 
+                          borderRadius: '12px',
+                          fontWeight: 'bold',
+                          border: `1px solid ${item.last_status ? '#b2f2bb' : '#feb2b2'}`
+                        }}>
+                          {item.last_status ? 'UP' : 'DOWN'}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ color: '#0070f3', fontSize: '14px', marginBottom: '8px' }}>{item.url}</div>
+                    <div style={{ display: 'flex', gap: '20px', fontSize: '13px', color: '#777' }}>
+                      <span>Latency: <strong>{getLatencyLabel(item.last_response_time_ms)}</strong></span>
+                      <span>Last Check: {item.last_checked_at ? new Date(item.last_checked_at).toLocaleTimeString() : 'Never'}</span>
+                    </div>
+                  </div>
+                  
+                  <button 
+                      onClick={() => handleCheck(item.url)}
+                      disabled={isChecking}
+                      style={{ 
+                          padding: '10px 16px', 
+                          fontSize: '13px', 
+                          cursor: isChecking ? 'not-allowed' : 'pointer',
+                          backgroundColor: isChecking ? '#eee' : '#fff',
+                          border: '1px solid #ccc',
+                          borderRadius: '6px',
+                          color: isChecking ? '#999' : '#333',
+                          transition: 'all 0.2s',
+                          fontWeight: '500'
+                      }}
+                  >
+                      {isChecking ? 'Checking...' : 'Check Now'}
+                  </button>
                 </div>
-                <button 
-                    onClick={() => handleCheck(item.url)}
-                    disabled={checkLoading === item.url}
-                    style={{ 
-                        padding: '5px 10px', 
-                        fontSize: '12px', 
-                        cursor: checkLoading === item.url ? 'not-allowed' : 'pointer',
-                        backgroundColor: checkLoading === item.url ? '#ccc' : '#EFEFEF',
-                        border: '1px solid #ddd',
-                        borderRadius: '3px'
-                    }}
-                >
-                    {checkLoading === item.url ? 'Checking...' : 'Check Now'}
-                </button>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
@@ -148,4 +198,5 @@ function Dashboard() {
 }
 
 export default Dashboard;
+
 

@@ -88,7 +88,10 @@ app.post('/add-url', authenticateToken, async (req, res) => {
         await addUrl(url, 'User Monitored', req.user.userId);
         res.json({ message: 'URL added to monitoring list', url });
     } catch (err) {
-        res.status(500).json({ error: 'Failed to add URL to database' });
+        if (err.message.includes('Limit reached')) {
+            return res.status(403).json({ error: err.message });
+        }
+        res.status(500).json({ error: 'Failed to add URL to database', details: err.message });
     }
 });
 

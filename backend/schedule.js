@@ -3,6 +3,19 @@ const { sendAlert } = require('./alerts');
 const { pool } = require('./db');
 
 const addUrl = async (url, name = 'Manual Check', userId = null) => {
+    // 0. Check Limits (Guardrails)
+    if (userId) {
+        const userRes = await pool.query('SELECT max_urls FROM users WHERE id = $1', [userId]);
+        const countRes = await pool.query('SELECT COUNT(*) FROM monitored_urls WHERE user_id = $1', [userId]);
+        
+        const maxUrls = userRes.rows[0]?.max_urls || 5; // Default to 5 if not found
+        const currentCount = parseInt(countRes.rows[0]?.count || 0, 10);
+
+        if (currentCount >= maxUrls) {
+            throw new Error(`Limit reached: You can only monitor ${maxUrls} URLs on your current plan.`);
+        }
+    }
+
     // 1. Immediate Verification
     const start = Date.now();
     let success = false;
@@ -21,8 +34,8 @@ const addUrl = async (url, name = 'Manual Check', userId = null) => {
     try {
         const query = `
             INSERT INTO monitored_urls 
-            (name, url, user_id, last_status, last_response_time_ms) 
-            VALUES ($1, $2, $3, $4, $5) 
+            (name, url, user_id, last_status, last_response_time_ms, last_checked_at) 
+            VALUES ($1, $2, $3, $4, $5, NOW()) 
             RETURNING *
         `;
         const values = [name, url, userId, success, duration];
@@ -37,9 +50,21 @@ const addUrl = async (url, name = 'Manual Check', userId = null) => {
     }
 };
 
-const getUrls = async () => {
+const getDueUrls = async () => {
     try {
-        const res = await pool.query('SELECT * FROM monitored_urls WHERE active = true');
+        // Fetch URLs joined with users to check interval
+        // Default interval 300s (5m) if user or setting missing
+        const query = `
+            SELECT m.*, u.check_interval_seconds 
+            FROM monitored_urls m
+            LEFT JOIN users u ON m.user_id = u.id
+            WHERE m.active = true 
+            AND (
+                m.last_checked_at IS NULL 
+                OR m.last_checked_at < NOW() - (COALESCE(u.check_interval_seconds, 300) * INTERVAL '1 second')
+            )
+        `;
+        const res = await pool.query(query);
         return res.rows;
     } catch (err) {
         console.error('Error fetching URLs from DB:', err);
@@ -81,9 +106,6 @@ const checkUrl = async (entry) => {
     } else if (success && last_status === false) {
         console.log(`[STATE CHANGE] ${name} Recovered (UP).`);
         // Optional: Send recovery email here
-    } else {
-        // No state change (Stable UP or Stable DOWN)
-        // console.log(`[CHECK] ${name}: ${success ? 'OK' : 'DOWN (Already alerted)'}`);
     }
 
     // 3. Update Database
@@ -92,6 +114,7 @@ const checkUrl = async (entry) => {
             UPDATE monitored_urls 
             SET last_status = $1, 
                 last_response_time_ms = $2,
+                last_checked_at = NOW(),
                 last_alert_sent_at = CASE WHEN $3 THEN NOW() ELSE last_alert_sent_at END
             WHERE id = $4
         `;
@@ -102,24 +125,23 @@ const checkUrl = async (entry) => {
 };
 
 const startScheduler = () => {
-    // Schedule task to run every 5 minutes
-    cron.schedule('*/5 * * * *', async () => {
-        console.log('Running scheduled checks...');
-        const urls = await getUrls();
+    // Schedule task to run every MINUTE
+    cron.schedule('* * * * *', async () => {
+        // console.log('Checking for due URLs...');
+        const urls = await getDueUrls();
         if (urls.length === 0) {
-            console.log('No URLs to monitor.');
             return;
         }
+        console.log(`Found ${urls.length} URLs due for check.`);
 
         for (const entry of urls) {
             await checkUrl(entry);
         }
     });
-    console.log('Scheduler started: Checks every 5 minutes.');
+    console.log('Scheduler started: Running every minute to check due URLs.');
 };
 
 module.exports = {
     addUrl,
-    getUrls,
     startScheduler
 };
