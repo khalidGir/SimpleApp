@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authFetch } from '../utils/api';
 
 function Dashboard() {
   const [urls, setUrls] = useState([]);
   const [newUrl, setNewUrl] = useState('');
   const [loading, setLoading] = useState(true);
+  const [addLoading, setAddLoading] = useState(false);
+  const [checkLoading, setCheckLoading] = useState(null); // URL that is being checked
   const [error, setError] = useState(null);
   const [addError, setAddError] = useState(null);
   const navigate = useNavigate();
@@ -14,28 +17,12 @@ function Dashboard() {
   }, []);
 
   const fetchUrls = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
     try {
-      const response = await fetch('https://simpleapp-gp8l.onrender.com/urls', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.status === 401 || response.status === 403) {
-        localStorage.removeItem('token');
-        navigate('/login');
-        return;
-      }
-
-      if (!response.ok) throw new Error('Failed to fetch URLs');
-
-      const data = await response.json();
+      const data = await authFetch('/urls');
       setUrls(data);
     } catch (err) {
+      // If error is strictly session related, authFetch redirects.
+      // Otherwise, show error.
       setError(err.message);
     } finally {
       setLoading(false);
@@ -45,46 +32,35 @@ function Dashboard() {
   const handleAddUrl = async (e) => {
     e.preventDefault();
     setAddError(null);
-    const token = localStorage.getItem('token');
+    setAddLoading(true);
 
     try {
-      const response = await fetch('https://simpleapp-gp8l.onrender.com/add-url', {
+      await authFetch('/add-url', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify({ url: newUrl }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || 'Failed to add URL');
 
       setNewUrl('');
       fetchUrls(); // Refresh list
     } catch (err) {
       setAddError(err.message);
+    } finally {
+      setAddLoading(false);
     }
   };
 
   const handleCheck = async (url) => {
-    // Optional: Trigger a manual check and update the specific item (implementation simplified here)
-    // For now, we rely on the list view or could implement a per-item check
-    const token = localStorage.getItem('token');
+    setCheckLoading(url);
     try {
-        const response = await fetch('https://simpleapp-gp8l.onrender.com/check', {
+        const result = await authFetch('/check', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
             body: JSON.stringify({ url })
         });
-        const result = await response.json();
         alert(`Check Result:\nStatus: ${result.status}\nResponse Time: ${result.responseTimeMs}ms\nSuccess: ${result.success}`);
     } catch (e) {
-        alert('Check failed');
+        alert('Check failed: ' + e.message);
+    } finally {
+        setCheckLoading(null);
     }
   };
 
@@ -115,9 +91,21 @@ function Dashboard() {
             placeholder="https://example.com"
             style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
             required
+            disabled={addLoading}
           />
-          <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            Add URL
+          <button 
+            type="submit" 
+            disabled={addLoading}
+            style={{ 
+              padding: '10px 20px', 
+              backgroundColor: addLoading ? '#ccc' : '#0070f3', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px', 
+              cursor: addLoading ? 'not-allowed' : 'pointer' 
+            }}
+          >
+            {addLoading ? 'Adding...' : 'Add URL'}
           </button>
         </form>
       </div>
@@ -138,9 +126,17 @@ function Dashboard() {
                 </div>
                 <button 
                     onClick={() => handleCheck(item.url)}
-                    style={{ padding: '5px 10px', fontSize: '12px', cursor: 'pointer' }}
+                    disabled={checkLoading === item.url}
+                    style={{ 
+                        padding: '5px 10px', 
+                        fontSize: '12px', 
+                        cursor: checkLoading === item.url ? 'not-allowed' : 'pointer',
+                        backgroundColor: checkLoading === item.url ? '#ccc' : '#EFEFEF',
+                        border: '1px solid #ddd',
+                        borderRadius: '3px'
+                    }}
                 >
-                    Check Now
+                    {checkLoading === item.url ? 'Checking...' : 'Check Now'}
                 </button>
               </li>
             ))}
@@ -152,3 +148,4 @@ function Dashboard() {
 }
 
 export default Dashboard;
+

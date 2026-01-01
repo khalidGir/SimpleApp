@@ -1,35 +1,33 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { publicFetch } from '../utils/api';
 
 function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setLoading(true);
 
     try {
-      const response = await fetch('https://simpleapp-gp8l.onrender.com/register', {
+      await publicFetch('/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
 
       setSuccess('Registration successful! Redirecting to login...');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,6 +45,7 @@ function Register() {
             onChange={(e) => setEmail(e.target.value)}
             style={{ width: '100%', padding: '8px', marginTop: '5px' }}
             required
+            disabled={loading}
           />
         </div>
         <div style={{ marginBottom: '15px' }}>
@@ -57,10 +56,23 @@ function Register() {
             onChange={(e) => setPassword(e.target.value)}
             style={{ width: '100%', padding: '8px', marginTop: '5px' }}
             required
+            disabled={loading}
           />
         </div>
-        <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          Register
+        <button 
+          type="submit" 
+          disabled={loading}
+          style={{ 
+            width: '100%', 
+            padding: '10px', 
+            backgroundColor: loading ? '#ccc' : '#0070f3', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: '4px', 
+            cursor: loading ? 'not-allowed' : 'pointer' 
+          }}
+        >
+          {loading ? 'Registering...' : 'Register'}
         </button>
       </form>
       <p style={{ marginTop: '15px', textAlign: 'center' }}>
@@ -71,3 +83,4 @@ function Register() {
 }
 
 export default Register;
+
