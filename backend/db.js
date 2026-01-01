@@ -59,6 +59,9 @@ const initDb = async () => {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='check_interval_seconds') THEN
             ALTER TABLE users ADD COLUMN check_interval_seconds INTEGER DEFAULT 300;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='chapa_payment_id') THEN
+            ALTER TABLE users ADD COLUMN chapa_payment_id TEXT;
+        END IF;
     END
     $$;
   `;
@@ -85,9 +88,31 @@ const createUser = async (email, passwordHash) => {
   return res.rows[0];
 };
 
+const upgradeUserToPro = async (userId, paymentId) => {
+  const query = `
+    UPDATE users 
+    SET plan = 'pro', 
+        max_urls = 50, 
+        check_interval_seconds = 60,
+        chapa_payment_id = $2
+    WHERE id = $1
+    RETURNING *
+  `;
+  const values = [userId, paymentId];
+  const res = await pool.query(query, values);
+  return res.rows[0];
+};
+
 const findUserByEmail = async (email) => {
   const query = 'SELECT * FROM users WHERE email = $1';
   const values = [email];
+  const res = await pool.query(query, values);
+  return res.rows[0];
+};
+
+const findUserById = async (id) => {
+  const query = 'SELECT * FROM users WHERE id = $1';
+  const values = [id];
   const res = await pool.query(query, values);
   return res.rows[0];
 };

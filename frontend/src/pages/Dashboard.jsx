@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch } from '../utils/api';
 
 function Dashboard() {
   const [urls, setUrls] = useState([]);
+  const [user, setUser] = useState(null);
   const [newUrl, setNewUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [addLoading, setAddLoading] = useState(false);
@@ -11,15 +12,23 @@ function Dashboard() {
   const [error, setError] = useState(null);
   const [addError, setAddError] = useState(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    fetchUrls();
+    fetchData();
+    if (searchParams.get('upgrade') === 'success') {
+      alert('Upgrade Successful! You are now on the Pro plan.');
+    }
   }, []);
 
-  const fetchUrls = async () => {
+  const fetchData = async () => {
     try {
-      const data = await authFetch('/urls');
-      setUrls(data);
+      const [urlsData, userData] = await Promise.all([
+        authFetch('/urls'),
+        authFetch('/me')
+      ]);
+      setUrls(urlsData);
+      setUser(userData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -39,7 +48,7 @@ function Dashboard() {
       });
 
       setNewUrl('');
-      fetchUrls();
+      fetchData(); // Refresh list and potentially user limits/counts if we tracked usage in user object
     } catch (err) {
       setAddError(err.message);
     } finally {
@@ -55,7 +64,7 @@ function Dashboard() {
             body: JSON.stringify({ url })
         });
         alert(`Check Result:\nStatus: ${result.status}\nResponse Time: ${result.responseTimeMs}ms\nSuccess: ${result.success}`);
-        fetchUrls(); // Refresh status on the card
+        fetchData(); // Refresh status on the card
     } catch (e) {
         alert('Check failed: ' + e.message);
     } finally {
@@ -77,14 +86,29 @@ function Dashboard() {
 
   if (loading) return (
     <div style={{ textAlign: 'center', marginTop: '100px', fontFamily: 'Arial' }}>
-      <h2>Loading URLs...</h2>
+      <h2>Loading Dashboard...</h2>
     </div>
   );
 
   return (
     <div style={{ maxWidth: '800px', margin: '50px auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h1 style={{ margin: 0, color: '#333' }}>SimpleApp Monitor</h1>
+        <div>
+            <h1 style={{ margin: 0, color: '#333' }}>SimpleApp Monitor</h1>
+            {user && (
+                <div style={{ marginTop: '5px', fontSize: '14px', color: '#666' }}>
+                    Plan: <strong>{user.plan === 'pro' ? 'Pro' : 'Free'}</strong>
+                    {user.plan !== 'pro' && (
+                        <button 
+                            onClick={() => navigate('/upgrade')}
+                            style={{ marginLeft: '10px', padding: '4px 8px', fontSize: '12px', background: '#38b2ac', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                            Upgrade to Pro
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
         <button onClick={handleLogout} style={{ padding: '8px 16px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
           Logout
         </button>
@@ -92,7 +116,18 @@ function Dashboard() {
 
       <div style={{ marginBottom: '40px', padding: '25px', backgroundColor: '#f9f9f9', borderRadius: '12px', border: '1px solid #eee' }}>
         <h3 style={{ marginTop: 0 }}>Add New Service</h3>
-        {addError && <div style={{ color: 'red', marginBottom: '15px', padding: '10px', backgroundColor: '#fff5f5', borderRadius: '4px', fontSize: '14px' }}>{addError}</div>}
+        {addError && (
+            <div style={{ color: 'red', marginBottom: '15px', padding: '10px', backgroundColor: '#fff5f5', borderRadius: '4px', fontSize: '14px' }}>
+                {addError}
+                {addError.includes('Limit reached') && (
+                    <div style={{ marginTop: '5px' }}>
+                        <button onClick={() => navigate('/upgrade')} style={{ color: '#0070f3', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}>
+                            Upgrade to increase limits
+                        </button>
+                    </div>
+                )}
+            </div>
+        )}
         <form onSubmit={handleAddUrl} style={{ display: 'flex', gap: '10px' }}>
           <input
             type="text"
@@ -122,7 +157,7 @@ function Dashboard() {
       </div>
 
       <div>
-        <h3 style={{ color: '#555', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Monitored Services</h3>
+        <h3 style={{ color: '#555', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Monitored Services ({urls.length}/{user?.max_urls || 5})</h3>
         {error && <div style={{ color: 'red', marginBottom: '20px' }}>{error}</div>}
         
         {urls.length === 0 ? (
@@ -198,5 +233,6 @@ function Dashboard() {
 }
 
 export default Dashboard;
+
 
 

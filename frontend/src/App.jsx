@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Landing from './pages/Landing';
+import Upgrade from './pages/Upgrade';
 
 // Helper for protected routes
 const PrivateRoute = ({ children }) => {
@@ -26,6 +27,14 @@ function App() {
             </PrivateRoute>
           } 
         />
+        <Route 
+          path="/upgrade" 
+          element={
+            <PrivateRoute>
+              <Upgrade />
+            </PrivateRoute>
+          } 
+        />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
@@ -33,4 +42,5 @@ function App() {
 }
 
 export default App;
+
 

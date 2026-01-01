@@ -3,8 +3,9 @@ const cors = require('cors');
 const { Resend } = require('resend');
 const { addUrl, startScheduler } = require('./schedule');
 const { sendAlert } = require('./alerts');
-const { initDb, createUser, findUserByEmail, getUserUrls } = require('./db');
+const { initDb, createUser, findUserByEmail, getUserUrls, upgradeUserToPro, findUserById } = require('./db');
 const { hashPassword, comparePassword, generateToken, authenticateToken } = require('./auth');
+const { initializePayment, verifySignature } = require('./chapa');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,6 +17,54 @@ app.use(express.json());
 // Initialize DB and start scheduler
 initDb();
 startScheduler();
+
+app.get('/me', authenticateToken, async (req, res) => {
+    try {
+        const user = await findUserById(req.user.userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        // Exclude password hash
+        const { password_hash, ...profile } = user;
+        res.json(profile);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+});
+
+app.post('/create-checkout-session', authenticateToken, async (req, res) => {
+    try {
+        const tx_ref = `tx-${req.user.userId}-${Date.now()}`;
+        // Using req.user from authenticateToken
+        const checkoutInfo = await initializePayment({ 
+            email: req.user.email, 
+            id: req.user.userId 
+        }, tx_ref);
+        
+        res.json({ checkoutUrl: checkoutInfo.data.checkout_url });
+    } catch (error) {
+        console.error('Checkout error:', error);
+        res.status(500).json({ error: 'Failed to initiate payment' });
+    }
+});
+
+app.post('/chapa/webhook', async (req, res) => {
+    // Note: Signature verification ideally needs raw body
+    // For now, checking status and meta
+    const { status, tx_ref, meta } = req.body;
+    
+    console.log('Chapa Webhook received:', req.body);
+
+    if (status === 'success' && meta && meta.user_id) {
+        try {
+            await upgradeUserToPro(meta.user_id, tx_ref);
+            console.log(`User ${meta.user_id} upgraded to Pro via webhook`);
+        } catch (error) {
+            console.error('Failed to upgrade user via webhook', error);
+            return res.status(500).send('Database update failed');
+        }
+    }
+    
+    res.status(200).send('OK');
+});
 
 app.get('/urls', authenticateToken, async (req, res) => {
     try {
