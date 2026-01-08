@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { publicFetch } from '../utils/api';
+import './Auth.css';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -30,51 +31,58 @@ function Login() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-      <h2>Login</h2>
-      {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Email:</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-            required
-            disabled={loading}
-          />
+    <div className="auth-page">
+      <Link to="/" className="auth-logo">SimpleMonitor.</Link>
+
+      <div className="auth-container">
+        <div className="auth-header">
+          <h2>Welcome back</h2>
+          <p>Please enter your details.</p>
         </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Password:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-            required
-            disabled={loading}
-          />
+
+        {error && <div className="error-message">{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              className="form-input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+              placeholder="name@example.com"
+            />
+          </div>
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              className="form-input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={loading}
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div className="auth-actions">
+            <button
+              type="submit"
+              className="btn-black btn-full"
+              disabled={loading}
+            >
+              {loading ? 'Logging in...' : 'Sign In'}
+            </button>
+          </div>
+        </form>
+
+        <div className="auth-footer">
+          Don't have an account? <Link to="/register">Sign up for free</Link>
         </div>
-        <button 
-          type="submit" 
-          disabled={loading}
-          style={{ 
-            width: '100%', 
-            padding: '10px', 
-            backgroundColor: loading ? '#ccc' : '#0070f3', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '4px', 
-            cursor: loading ? 'not-allowed' : 'pointer' 
-          }}
-        >
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
-      <p style={{ marginTop: '15px', textAlign: 'center' }}>
-        Don't have an account? <Link to="/register">Register</Link>
-      </p>
+      </div>
     </div>
   );
 }

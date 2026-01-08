@@ -124,5 +124,5 @@ const getUserUrls = async (userId) => {
   return res.rows;
 };
 
-module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls };
+module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls, findUserById, upgradeUserToPro };
 

@@ -1,0 +1,110 @@
+/* Auth Pages (Login / Register) */
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-primary);
+    padding: var(--space-4);
+}
+
+.auth-logo {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin-bottom: var(--space-6);
+    color: var(--fg-primary);
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 400px;
+    /* Minimalist: No border or background for a very clean look, or subtle if needed */
+    background: transparent;
+}
+
+.auth-header {
+    margin-bottom: var(--space-6);
+}
+
+.auth-header h2 {
+    font-size: 2rem;
+    margin-bottom: var(--space-2);
+}
+
+.auth-header p {
+    font-size: 0.95rem;
+    color: var(--fg-secondary);
+}
+
+.form-group {
+    margin-bottom: var(--space-4);
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--fg-secondary);
+    margin-bottom: var(--space-1);
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 0;
+    border: none;
+    border-bottom: 1px solid var(--border-light);
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--fg-primary);
+    transition: border-color 0.2s;
+    border-radius: 0;
+}
+
+.form-input:focus {
+    outline: none;
+    border-bottom-color: var(--fg-primary);
+}
+
+.auth-actions {
+    margin-top: var(--space-6);
+}
+
+.btn-full {
+    width: 100%;
+    text-align: center;
+}
+
+.auth-footer {
+    margin-top: var(--space-6);
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--fg-secondary);
+}
+
+.auth-footer a {
+    color: var(--fg-primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.error-message {
+    color: #e00;
+    font-size: 0.9rem;
+    margin-bottom: var(--space-4);
+    background: #fff0f0;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.success-message {
+    color: #008000;
+    font-size: 0.9rem;
+    margin-bottom: var(--space-4);
+    background: #f0fff0;
+    padding: 8px;
+    border-radius: 4px;
+}
