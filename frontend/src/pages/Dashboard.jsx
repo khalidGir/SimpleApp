@@ -106,6 +106,11 @@ function Dashboard() {
                             Upgrade to Pro
                         </button>
                     )}
+                    <div style={{ marginTop: '8px' }}>
+                        <a href={`/status/${user.id}`} target="_blank" rel="noreferrer" style={{ fontSize: '13px', color: '#0070f3' }}>
+                            View Public Status Page &rarr;
+                        </a>
+                    </div>
                 </div>
             )}
         </div>

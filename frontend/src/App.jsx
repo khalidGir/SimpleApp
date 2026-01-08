@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Landing from './pages/Landing';
 import Upgrade from './pages/Upgrade';
+import StatusPage from './pages/StatusPage';
 
 // Helper for protected routes
 const PrivateRoute = ({ children }) => {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/status/:userId" element={<StatusPage />} />
         <Route 
           path="/dashboard" 
           element={

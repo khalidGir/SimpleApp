@@ -124,5 +124,17 @@ const getUserUrls = async (userId) => {
   return res.rows;
 };
 
-module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls, findUserById, upgradeUserToPro };
+const getPublicUserUrls = async (userId) => {
+  const query = `
+    SELECT name, url, last_status, last_response_time_ms, last_checked_at 
+    FROM monitored_urls 
+    WHERE user_id = $1 AND active = true 
+    ORDER BY name ASC
+  `;
+  const values = [userId];
+  const res = await pool.query(query, values);
+  return res.rows;
+};
+
+module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls, findUserById, upgradeUserToPro, getPublicUserUrls };
 

@@ -3,7 +3,7 @@ const cors = require('cors');
 const { Resend } = require('resend');
 const { addUrl, startScheduler } = require('./schedule');
 const { sendAlert } = require('./alerts');
-const { initDb, createUser, findUserByEmail, getUserUrls, upgradeUserToPro, findUserById } = require('./db');
+const { initDb, createUser, findUserByEmail, getUserUrls, upgradeUserToPro, findUserById, getPublicUserUrls } = require('./db');
 const { hashPassword, comparePassword, generateToken, authenticateToken } = require('./auth');
 const { initializePayment, verifySignature } = require('./chapa');
 
@@ -13,6 +13,28 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.use(cors());
 app.use(express.json());
+
+// Public Status Page Endpoint
+app.get('/status-page/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        // Verify user exists first (optional, but good for 404s)
+        const user = await findUserById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'Status page not found' });
+        }
+
+        const urls = await getPublicUserUrls(userId);
+        res.json({
+            owner: `User ${userId}`, // In real app, maybe show Company Name
+            updatedAt: new Date(),
+            services: urls
+        });
+    } catch (error) {
+        console.error('Status page error:', error);
+        res.status(500).json({ error: 'Failed to load status page' });
+    }
+});
 
 // Initialize DB (ensure tables exist)
 initDb();
