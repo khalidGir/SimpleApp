@@ -62,6 +62,12 @@ const initDb = async () => {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='chapa_payment_id') THEN
             ALTER TABLE users ADD COLUMN chapa_payment_id TEXT;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_verified') THEN
+            ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='verification_token') THEN
+            ALTER TABLE users ADD COLUMN verification_token TEXT;
+        END IF;
     END
     $$;
   `;
@@ -136,5 +142,17 @@ const getPublicUserUrls = async (userId) => {
   return res.rows;
 };
 
-module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls, findUserById, upgradeUserToPro, getPublicUserUrls };
+const findUserByVerificationToken = async (token) => {
+  const query = 'SELECT * FROM users WHERE verification_token = $1';
+  const values = [token];
+  const res = await pool.query(query, values);
+  return res.rows[0];
+};
+
+const verifyUser = async (userId) => {
+  const query = 'UPDATE users SET is_verified = TRUE, verification_token = NULL WHERE id = $1';
+  await pool.query(query, [userId]);
+};
+
+module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls, findUserById, upgradeUserToPro, getPublicUserUrls, findUserByVerificationToken, verifyUser };
 

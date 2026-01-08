@@ -18,6 +18,9 @@ jest.mock('../db', () => ({
   getUserUrls: jest.fn(),
   findUserById: jest.fn(),
   upgradeUserToPro: jest.fn(),
+  findUserByVerificationToken: jest.fn(),
+  verifyUser: jest.fn(),
+  pool: { query: jest.fn() } // Mock the pool object
 }));
 
 // Mock the schedule module
@@ -29,6 +32,11 @@ jest.mock('../schedule', () => ({
 // Mock the alerts module (avoids Resend initialization)
 jest.mock('../alerts', () => ({
   sendAlert: jest.fn(),
+}));
+
+// Mock the email module
+jest.mock('../email', () => ({
+  sendVerificationEmail: jest.fn(),
 }));
 
 // Mock Chapa
@@ -44,17 +52,20 @@ describe('Server Endpoints', () => {
     expect(res.body).toHaveProperty('status', 'ok');
   });
 
-  it('POST /register should return 201 on success', async () => {
+  it('POST /register should return 201 on success and send email', async () => {
     // Mock database response
-    const { createUser, findUserByEmail } = require('../db');
+    const { createUser, findUserByEmail, pool } = require('../db');
     findUserByEmail.mockResolvedValue(null); // User does not exist
     createUser.mockResolvedValue({ id: 1, email: 'test@example.com' });
+    
+    // Mock pool.query for the token update
+    pool.query = jest.fn().mockResolvedValue({});
 
     const res = await request(app)
       .post('/register')
       .send({ email: 'test@example.com', password: 'password123' });
 
     expect(res.statusCode).toEqual(201);
-    expect(res.body).toHaveProperty('message', 'User created successfully');
+    expect(res.body).toHaveProperty('message', 'User created. Please check your email to verify your account.');
   });
 });

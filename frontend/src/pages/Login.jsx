@@ -1,19 +1,26 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { publicFetch } from '../utils/api';
-import './Auth.css';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { API_URL } from '../utils/api';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('verified') === 'true') {
+      setSuccess('Email verified successfully! You can now log in.');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
+    setError('');
+    setSuccess(''); // Clear previous success messages
+
 
     try {
       const data = await publicFetch('/login', {
@@ -35,14 +42,10 @@ function Login() {
       <Link to="/" className="auth-logo">SimpleMonitor.</Link>
 
       <div className="auth-container">
-        <div className="auth-header">
-          <h2>Welcome back</h2>
-          <p>Please enter your details.</p>
-        </div>
-
-        {error && <div className="error-message">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
+        <h2>Login</h2>
+        {success && <div style={{ color: 'green', marginBottom: '10px', padding: '10px', backgroundColor: '#f0fff4', borderRadius: '4px' }}>{success}</div>}
+        {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div className="form-group">
             <label>Email</label>
             <input

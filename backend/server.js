@@ -3,9 +3,11 @@ const cors = require('cors');
 const { Resend } = require('resend');
 const { addUrl, startScheduler } = require('./schedule');
 const { sendAlert } = require('./alerts');
-const { initDb, createUser, findUserByEmail, getUserUrls, upgradeUserToPro, findUserById, getPublicUserUrls } = require('./db');
+const crypto = require('crypto');
+const { initDb, createUser, findUserByEmail, getUserUrls, upgradeUserToPro, findUserById, getPublicUserUrls, findUserByVerificationToken, verifyUser } = require('./db');
 const { hashPassword, comparePassword, generateToken, authenticateToken } = require('./auth');
 const { initializePayment, verifySignature } = require('./chapa');
+const { sendVerificationEmail } = require('./email');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -111,9 +113,46 @@ app.post('/register', async (req, res) => {
 
         const hashedPassword = await hashPassword(password);
         const user = await createUser(email, hashedPassword);
-        res.status(201).json({ message: 'User created successfully', user: { id: user.id, email: user.email } });
+        
+        // Generate and save verification token
+        const token = crypto.randomBytes(32).toString('hex');
+        // We need to import pool to run this raw query, or add a helper.
+        // Importing pool in server.js is a bit leaky. 
+        // Better: add 'setVerificationToken' to db.js. 
+        // For now, I will rely on a new db helper I will add quickly or just import pool. 
+        // Let's add the pool import to server.js since db.js exports it.
+        const { pool } = require('./db');
+        await pool.query('UPDATE users SET verification_token = $1, is_verified = FALSE WHERE id = $2', [token, user.id]);
+
+        // Send Email
+        await sendVerificationEmail(email, token);
+
+        res.status(201).json({ 
+            message: 'User created. Please check your email to verify your account.', 
+            user: { id: user.id, email: user.email } 
+        });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Registration failed', details: error.message });
+    }
+});
+
+app.get('/verify-email', async (req, res) => {
+    const { token } = req.query;
+    if (!token) return res.status(400).send('Invalid token');
+
+    try {
+        const user = await findUserByVerificationToken(token);
+        if (!user) return res.status(400).send('Invalid or expired token');
+
+        await verifyUser(user.id);
+        
+        // Redirect to frontend login with success flag
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        res.redirect(`${frontendUrl}/login?verified=true`);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Verification failed');
     }
 });
 
@@ -127,6 +166,11 @@ app.post('/login', async (req, res) => {
         const user = await findUserByEmail(email);
         if (!user) {
             return res.status(400).json({ error: 'Invalid credentials' });
+        }
+
+        // Check verification status
+        if (!user.is_verified) {
+             return res.status(403).json({ error: 'Please verify your email address before logging in.' });
         }
 
         const isMatch = await comparePassword(password, user.password_hash);
