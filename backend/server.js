@@ -14,9 +14,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 app.use(cors());
 app.use(express.json());
 
-// Initialize DB and start scheduler
+// Initialize DB (ensure tables exist)
 initDb();
-startScheduler();
+// Note: Scheduler is now run by worker.js
 
 app.get('/me', authenticateToken, async (req, res) => {
     try {
