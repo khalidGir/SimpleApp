@@ -4,6 +4,31 @@ import SEO from '../components/SEO';
 import '../global.css';
 import './Landing.css';
 
+// SVG Icons Component
+const Icon = ({ name }) => {
+  const icons = {
+    radar: (
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+        <path d="M12 12m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0" />
+        <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+        <path d="M12 3v9" />
+      </svg>
+    ),
+    bolt: (
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M13 2l-10 11h8l-1 9l10 -11h-8l1 -9" />
+      </svg>
+    ),
+    shield: (
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" />
+      </svg>
+    )
+  };
+  return <div style={{ color: 'var(--primary)', filter: 'drop-shadow(0 0 8px rgba(99, 102, 241, 0.5))' }}>{icons[name]}</div>;
+};
+
 function Landing() {
   return (
     <div className="landing-page deep-space-wrapper">
@@ -47,17 +72,17 @@ function Landing() {
       {/* FEATURES SECTION */}
       <section className="features">
         <div className="feature-card">
-          <span style={{fontSize: '3rem'}}>📡</span>
+          <div style={{ marginBottom: '1.5rem' }}><Icon name="radar" /></div>
           <h3>Hyper-Fast Pings</h3>
           <p>Global monitoring network checks your services every 60 seconds. Know the moment a signal drops.</p>
         </div>
         <div className="feature-card">
-          <span style={{fontSize: '3rem'}}>🚨</span>
+          <div style={{ marginBottom: '1.5rem' }}><Icon name="bolt" /></div>
           <h3>Instant Alerts</h3>
           <p>Immediate email notifications via high-reliability uplinks. Never keep your users waiting.</p>
         </div>
         <div className="feature-card">
-          <span style={{fontSize: '3rem'}}>🔮</span>
+          <div style={{ marginBottom: '1.5rem' }}><Icon name="shield" /></div>
           <h3>Public Beacons</h3>
           <p>Beautiful, transparent status pages to build trust with your audience. 100% white-labeled.</p>
         </div>
