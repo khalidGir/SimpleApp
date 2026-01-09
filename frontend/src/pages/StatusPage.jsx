@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { API_URL } from '../utils/api';
+import '../global.css';
 
 function StatusPage() {
   const { userId } = useParams();
@@ -25,90 +26,124 @@ function StatusPage() {
   }, [userId]);
 
   if (loading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '100px', fontFamily: 'sans-serif' }}>
-      <div className="loader">Loading status...</div>
+    <div className="deep-space-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="text-glow" style={{ fontSize: '1.2rem', color: 'var(--text-muted)', letterSpacing: '2px' }}>
+        ESTABLISHING UPLINK...
+      </div>
     </div>
   );
 
   if (error) return (
-    <div style={{ textAlign: 'center', marginTop: '100px', fontFamily: 'sans-serif', color: '#666' }}>
-      <h2>404</h2>
-      <p>{error}</p>
+    <div className="deep-space-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center' }}>
+        <h1 className="text-glow-error" style={{ fontSize: '3rem', margin: 0 }}>404</h1>
+        <p style={{ color: 'var(--text-muted)' }}>SIGNAL LOST: {error}</p>
+      </div>
     </div>
   );
 
   const allUp = data.services.every(s => s.last_status);
   const downCount = data.services.filter(s => !s.last_status).length;
+  const systemStatusColor = allUp ? 'var(--success)' : (downCount === data.services.length ? 'var(--error)' : 'var(--warning)');
+  const statusMessage = allUp ? 'ALL SYSTEMS OPERATIONAL' : 'SYSTEM ANOMALIES DETECTED';
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
-      
-      {/* Header */}
-      <div style={{ marginBottom: '40px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '32px', marginBottom: '10px', color: '#333' }}>System Status</h1>
-        <p style={{ color: '#666' }}>Last updated: {new Date(data.updatedAt).toLocaleString()}</p>
-      </div>
+    <div className="deep-space-wrapper">
+      <div className="container" style={{ maxWidth: '800px' }}>
+        
+        {/* HEADER / REACTOR CORE */}
+        <div style={{ textAlign: 'center', marginBottom: '4rem', paddingTop: '2rem' }}>
+          
+          {/* THE CORE */}
+          <div style={{ 
+            width: '120px', height: '120px', margin: '0 auto 2rem auto',
+            borderRadius: '50%',
+            background: `radial-gradient(circle at 30% 30%, white, ${systemStatusColor})`,
+            boxShadow: `0 0 60px ${systemStatusColor}, inset 0 0 20px rgba(0,0,0,0.5)`,
+            position: 'relative',
+            animation: allUp ? 'float 6s ease-in-out infinite' : 'shake 0.5s ease-in-out infinite'
+          }}>
+            <div style={{ 
+              position: 'absolute', inset: '-10px', borderRadius: '50%',
+              border: `2px solid ${systemStatusColor}`, opacity: 0.3,
+              animation: 'spin 10s linear infinite'
+            }}></div>
+            <div style={{ 
+              position: 'absolute', inset: '-20px', borderRadius: '50%',
+              border: `1px dashed ${systemStatusColor}`, opacity: 0.1,
+              animation: 'spin 20s linear infinite reverse'
+            }}></div>
+          </div>
 
-      {/* Global Status Banner */}
-      <div style={{ 
-        padding: '20px', 
-        borderRadius: '8px', 
-        backgroundColor: allUp ? '#28a745' : (downCount === data.services.length ? '#dc3545' : '#ffc107'),
-        color: 'white',
-        textAlign: 'center',
-        marginBottom: '40px',
-        fontWeight: 'bold',
-        fontSize: '18px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-      }}>
-        {allUp 
-          ? 'All Systems Operational' 
-          : `${downCount} Service${downCount > 1 ? 's' : ''} Experiencing Issues`}
-      </div>
+          <h1 style={{ 
+            fontSize: '2rem', fontWeight: 800, margin: '0 0 0.5rem 0',
+            letterSpacing: '1px', color: 'white', textShadow: `0 0 20px ${systemStatusColor}` 
+          }}>
+            {statusMessage}
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
+            LAST SYNC: {new Date(data.updatedAt).toLocaleTimeString()}
+          </p>
+        </div>
 
-      {/* Service List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        {data.services.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#999' }}>No services monitored.</p>
-        ) : (
+        {/* SERVICE GRID (Linear Layout for Public) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {data.services.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+              NO TELEMETRY DATA
+            </div>
+          ) : (
             data.services.map((service, idx) => (
-            <div key={idx} style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                padding: '20px',
-                backgroundColor: 'white',
-                border: '1px solid #eee',
-                borderRadius: '8px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-            }}>
+              <div key={idx} className="card" style={{ 
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '1.5rem', background: 'rgba(15, 23, 42, 0.4)',
+                borderLeft: `4px solid ${service.last_status ? 'var(--success)' : 'var(--error)'}`
+              }}>
                 <div>
-                <h3 style={{ margin: '0 0 5px 0', fontSize: '16px', color: '#333' }}>{service.name}</h3>
-                {/* <a href={service.url} target="_blank" rel="noreferrer" style={{ color: '#0070f3', fontSize: '12px', textDecoration: 'none' }}>{service.url}</a> */}
+                  <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem', color: 'white' }}>{service.name}</h3>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>LATENCY: {service.last_response_time_ms || '—'}ms</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>|</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>CHECKED: {new Date(service.last_checked_at).toLocaleTimeString()}</span>
+                  </div>
                 </div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ 
-                    fontSize: '14px', 
-                    color: service.last_status ? '#28a745' : '#dc3545',
-                    fontWeight: '600'
-                }}>
-                    {service.last_status ? 'Operational' : 'Outage'}
-                </span>
-                <div style={{ 
-                    width: '12px', 
-                    height: '12px', 
-                    borderRadius: '50%', 
-                    backgroundColor: service.last_status ? '#28a745' : '#dc3545' 
-                }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ 
+                    fontSize: '0.9rem', fontWeight: 700, letterSpacing: '1px',
+                    color: service.last_status ? 'var(--success)' : 'var(--error)',
+                    textShadow: `0 0 10px ${service.last_status ? 'var(--success)' : 'var(--error)'}`
+                  }}>
+                    {service.last_status ? 'OPERATIONAL' : 'OFFLINE'}
+                  </span>
+                  <div className={`status-dot ${service.last_status ? 'up' : 'down'}`}></div>
                 </div>
-            </div>
+              </div>
             ))
-        )}
-      </div>
+          )}
+        </div>
 
-      <div style={{ marginTop: '60px', textAlign: 'center', color: '#999', fontSize: '12px' }}>
-        Powered by <a href="/" style={{ color: '#666', textDecoration: 'underline' }}>SimpleApp Monitor</a>
+        <div style={{ marginTop: '5rem', textAlign: 'center', opacity: 0.4 }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', letterSpacing: '2px' }}>
+            MONITORING INFRASTRUCTURE PROVIDED BY <span style={{ color: 'white' }}>SIMPLE MONITOR</span>
+          </p>
+        </div>
+
+        <style>{`
+          @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+          }
+        `}</style>
       </div>
     </div>
   );
