@@ -10,7 +10,7 @@ This document serves as the **Source of Truth** for remaining Technical and Busi
 
 ## 2. Maintenance & Support
 - [x] **Data Cleanup:** Auto-delete ping history older than 30 days to save DB space.
-- [ ] **Password Reset:** Automated email flow for lost passwords.
+- [x] **Password Reset:** Automated email flow for lost passwords.
 - [ ] **Error Logging:** System to track crashes in production.
 
 ## 🟡 Priority 3: Growth & Polish (The "Scale" Pack)
