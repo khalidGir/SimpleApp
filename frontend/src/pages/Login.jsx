@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { API_URL } from '../utils/api';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { publicFetch } from '../utils/api';
+import './Auth.css'; // Assuming we share styles
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -19,8 +21,8 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setSuccess(''); // Clear previous success messages
-
+    setSuccess('');
+    setLoading(true);
 
     try {
       const data = await publicFetch('/login', {
@@ -91,4 +93,3 @@ function Login() {
 }
 
 export default Login;
-
