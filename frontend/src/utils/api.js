@@ -1,4 +1,4 @@
-const API_BASE = 'https://simpleapp-gp8l.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 /**
  * Helper to handle fetch responses and errors.
@@ -37,7 +37,7 @@ export const authFetch = async (endpoint, options = {}) => {
   }
 
   try {
-    const response = await fetch(`${API_BASE}${endpoint}`, {
+    const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
     });
@@ -68,7 +68,7 @@ export const publicFetch = async (endpoint, options = {}) => {
   };
 
   try {
-    const response = await fetch(`${API_BASE}${endpoint}`, {
+    const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
     });
@@ -81,3 +81,5 @@ export const publicFetch = async (endpoint, options = {}) => {
     throw error;
   }
 };
+
+export { API_URL };
