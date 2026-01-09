@@ -1,0 +1,49 @@
+name: Production Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(github.ref, 'refs/heads/main')
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Deploy to VPS via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        script: |
+          # 1. Navigate to project folder
+          mkdir -p ~/simpleapp
+          cd ~/simpleapp
+
+          # 2. Pull latest code
+          # Note: You need to clone the repo once manually on the server first!
+          git pull origin main
+
+          # 3. Create/Update .env file from GitHub Secrets
+          echo "PORT=5000" > .env
+          echo "NODE_ENV=production" >> .env
+          echo "DATABASE_URL=postgres://user:password@db:5432/simpleapp" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" >> .env
+          echo "CHAPA_SECRET_KEY=${{ secrets.CHAPA_SECRET_KEY }}" >> .env
+          echo "ALERT_EMAIL=${{ secrets.ALERT_EMAIL }}" >> .env
+          echo "API_URL=https://${{ secrets.DOMAIN_NAME }}/api" >> .env
+          echo "FRONTEND_URL=https://${{ secrets.DOMAIN_NAME }}" >> .env
+          echo "ENABLE_CHECK_ENDPOINT=true" >> .env
+
+          # 4. Rebuild and Restart Docker Containers
+          # -d runs in detached mode (background)
+          # --build forces a rebuild of the images
+          docker-compose up -d --build --remove-orphans
+
+          # 5. Cleanup unused images to save space
+          docker image prune -f

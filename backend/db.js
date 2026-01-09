@@ -64,17 +64,25 @@ const createUser = async (email, passwordHash) => {
   return res.rows[0];
 };
 
-const upgradeUserToPro = async (userId, paymentId) => {
+const upgradeUserToPlan = async (userId, planType, paymentId) => {
+  let maxUrls = 50;
+  let interval = 60;
+  
+  if (planType === 'agency') {
+    maxUrls = 500;
+    interval = 30; // 30 second checks
+  }
+
   const query = `
     UPDATE users 
-    SET plan = 'pro', 
-        max_urls = 50, 
-        check_interval_seconds = 60,
-        chapa_payment_id = $2
+    SET plan = $2, 
+        max_urls = $3, 
+        check_interval_seconds = $4,
+        chapa_payment_id = $5
     WHERE id = $1
     RETURNING *
   `;
-  const values = [userId, paymentId];
+  const values = [userId, planType, maxUrls, interval, paymentId];
   const res = await pool.query(query, values);
   return res.rows[0];
 };
@@ -124,5 +132,5 @@ const verifyUser = async (userId) => {
   await pool.query(query, [userId]);
 };
 
-module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls, findUserById, upgradeUserToPro, getPublicUserUrls, findUserByVerificationToken, verifyUser };
+module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls, findUserById, upgradeUserToPlan, getPublicUserUrls, findUserByVerificationToken, verifyUser };
 

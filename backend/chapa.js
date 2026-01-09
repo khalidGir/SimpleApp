@@ -4,22 +4,31 @@ const crypto = require('crypto');
 const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
 const CHAPA_API_URL = 'https://api.chapa.co/v1';
 
-const initializePayment = async (user, tx_ref) => {
+const initializePayment = async (user, planType, tx_ref) => {
+    let amount = '1000';
+    let title = 'Pro Upgrade';
+    
+    if (planType === 'agency') {
+        amount = '5000';
+        title = 'Agency Upgrade';
+    }
+
     const payload = {
-        amount: '100', // Fixed amount for Pro upgrade
+        amount: amount, 
         currency: 'ETB',
         email: user.email,
-        first_name: 'User', // Placeholder or add to User model if available
+        first_name: 'User', 
         last_name: user.id.toString(),
         tx_ref: tx_ref,
-        callback_url: `${process.env.API_URL}/chapa/webhook`, // Webhook URL
-        return_url: `${process.env.FRONTEND_URL}/dashboard?upgrade=success`, // Frontend return URL
+        callback_url: `${process.env.API_URL}/chapa/webhook`,
+        return_url: `${process.env.FRONTEND_URL}/dashboard?upgrade=success`,
         customization: {
-            title: 'Upgrade to Pro',
-            description: 'Unlock 50 URLs and 1-minute checks',
+            title: title,
+            description: `Upgrade to ${title}`,
         },
         meta: {
-            user_id: user.id
+            user_id: user.id,
+            plan_type: planType // Pass this to webhook
         }
     };
 

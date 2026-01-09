@@ -82,5 +82,45 @@ To stop everything:
 2.  Press `Ctrl + C` on your keyboard.
 3.  Type `docker-compose down` to clean up.
 
+## 6. Going Live (Production Strategy)
+
+Ready to make money? Follow this roadmap to put your app on the internet.
+
+### Step 1: Buy "Land" (Server & Domain)
+1.  **Server (VPS):** Buy a cheap Ubuntu server ($5/mo) from DigitalOcean, Hetzner, or Linode.
+2.  **Domain:** Buy `your-app.com` from Namecheap or GoDaddy.
+3.  **DNS:** Point your domain's `A Record` to your Server's IP Address.
+
+### Step 2: Prepare the Server
+Login to your server (via SSH) and run these commands once:
+```bash
+# Install Docker & Git
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+apt-get install -y git
+
+# Clone your code
+git clone https://github.com/YOUR_USERNAME/SimpleApp.git ~/simpleapp
+```
+
+### Step 3: Connect the Pipeline
+Go to your GitHub Repository Settings > **Secrets and variables** > **Actions**.
+Add these "Repository Secrets":
+*   `VPS_HOST`: Your server's IP address (e.g., `123.45.67.89`).
+*   `VPS_USER`: Usually `root`.
+*   `VPS_SSH_KEY`: Your private SSH key (so GitHub can login).
+*   `DOMAIN_NAME`: `your-app.com`.
+*   `RESEND_API_KEY`: Your real email key.
+*   `CHAPA_SECRET_KEY`: Your real payment key.
+*   `JWT_SECRET`: A long random password.
+*   `ALERT_EMAIL`: Your admin email.
+
+### Step 4: Launch
+Just **Push to Main**.
+*   Github Actions will detect the change.
+*   It will login to your server.
+*   It will update the code, build the app, and restart it.
+*   **Time to deployment:** ~2 minutes.
+
 ---
 *Built by DeepSeek & Team*

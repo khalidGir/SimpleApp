@@ -7,11 +7,12 @@ function Upgrade() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (planType) => {
     setLoading(true);
     try {
       const response = await authFetch('/create-checkout-session', {
-        method: 'POST'
+        method: 'POST',
+        body: JSON.stringify({ planType })
       });
       window.location.href = response.checkoutUrl;
     } catch (error) {
@@ -21,92 +22,78 @@ function Upgrade() {
   };
 
   return (
-    <div className="deep-space-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 0' }}>
+    <div className="deep-space-wrapper" style={{ padding: '4rem 2rem' }}>
       <div className="container" style={{ textAlign: 'center' }}>
         
-        {/* HERO: The Problem & The Solution */}
-        <div style={{ marginBottom: '3rem' }}>
-          <div style={{ 
-            display: 'inline-block', background: '#f43f5e', color: 'white', 
-            fontWeight: 900, fontSize: '0.8rem', padding: '0.5rem 1rem', 
-            borderRadius: '50px', marginBottom: '1rem', letterSpacing: '1px', textTransform: 'uppercase'
-          }}>
-            Warning: Price Increases Soon
-          </div>
+        {/* HERO */}
+        <div style={{ marginBottom: '4rem' }}>
           <h1 className="text-glow" style={{ fontSize: '3.5rem', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.1 }}>
-            STOP LOSING REVENUE <br/>TO DOWNTIME.
+            CHOOSE YOUR WEAPON.
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', maxWidth: '700px', margin: '0 auto' }}>
-            Get the exact system top engineering teams use to catch outages before their customers do.
+            Scale your infrastructure monitoring as you grow. No monthly fees.
           </p>
         </div>
 
-        {/* THE GRAND SLAM OFFER CARD */}
-        <div className="card" style={{ 
-          maxWidth: '550px', margin: '0 auto', padding: '0', 
-          background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.95) 100%)',
-          border: '1px solid var(--primary)',
-          boxShadow: '0 0 80px rgba(99, 102, 241, 0.2)',
-          position: 'relative', overflow: 'hidden'
-        }}>
-          {/* Header */}
-          <div style={{ padding: '2rem', background: 'rgba(99, 102, 241, 0.1)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 800, color: 'white' }}>FOUNDER'S LIFETIME DEAL</h2>
-            <p style={{ margin: '0.5rem 0 0 0', color: 'var(--primary)', fontWeight: 600 }}>NO MONTHLY FEES. EVER.</p>
-          </div>
+        {/* PRICING GRID */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', alignItems: 'center' }}>
+          
+          {/* TIER 1: FREE */}
+          <PricingCard 
+            title="CADET" 
+            price="0" 
+            sub="Forever Free"
+            features={[
+              "5 Monitors",
+              "5-Minute Checks",
+              "Email Alerts",
+              "Community Support"
+            ]}
+            btnText="CURRENT PLAN"
+            btnAction={() => navigate('/dashboard')}
+            isGhost={true}
+          />
 
-          {/* The Value Stack */}
-          <div style={{ padding: '2rem', textAlign: 'left' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <StackItem name="50 Enterprise Monitors" value="Branded Status Pages" worth="$49/mo Value" />
-              <StackItem name="1-Minute Rapid Pings" value="Instant Alerts" worth="$29/mo Value" />
-              <StackItem name="Priority Email & SMS" value="Direct Uplink" worth="$19/mo Value" />
-              <StackItem name="Public Status Page" value="Build Trust" worth="$99/mo Value" />
-            </div>
+          {/* TIER 2: PRO (HERO) */}
+          <PricingCard 
+            title="COMMANDER" 
+            price="1,000" 
+            sub="One-time Payment"
+            features={[
+              "50 Monitors",
+              "1-Minute Rapid Checks",
+              "Priority SMS & Email",
+              "Public Status Pages",
+              "Advanced Analytics"
+            ]}
+            btnText={loading ? "PROCESSING..." : "GET LIFETIME ACCESS"}
+            btnAction={() => handleUpgrade('pro')}
+            isPrimary={true}
+            badge="MOST POPULAR"
+          />
 
-            {/* Total Value Anchor */}
-            <div style={{ margin: '2rem 0', padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', textAlign: 'center' }}>
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textDecoration: 'line-through' }}>Total Value: $2,300/year</div>
-              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'white', marginTop: '0.5rem' }}>
-                Today's Price:
-              </div>
-              <div style={{ fontSize: '4rem', fontWeight: 900, color: 'var(--success)', lineHeight: 1, textShadow: '0 0 30px rgba(16, 185, 129, 0.3)' }}>
-                100 <span style={{ fontSize: '1.5rem' }}>ETB</span>
-              </div>
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '0.5rem' }}>One-time payment. Own it forever.</div>
-            </div>
+          {/* TIER 3: AGENCY (ANCHOR) */}
+          <PricingCard 
+            title="ADMIRAL" 
+            price="5,000" 
+            sub="One-time Payment"
+            features={[
+              "500 Monitors",
+              "30-Second Hyper Checks",
+              "White-label Status Pages",
+              "API Access",
+              "Dedicated Support Channel"
+            ]}
+            btnText={loading ? "PROCESSING..." : "SCALE TO EMPIRE"}
+            btnAction={() => handleUpgrade('agency')}
+            isGhost={false}
+            borderColor="var(--warning)"
+          />
 
-            {/* The Big Button */}
-            <button 
-              onClick={handleUpgrade} 
-              className="btn"
-              disabled={loading}
-              style={{ 
-                width: '100%', padding: '1.5rem', fontSize: '1.4rem', fontWeight: 800,
-                background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)', // Green for money/go
-                color: 'white',
-                boxShadow: '0 10px 30px rgba(16, 185, 129, 0.4)',
-                border: '1px solid #34d399',
-                marginBottom: '1rem',
-                transform: 'scale(1)',
-                transition: 'transform 0.2s'
-              }}
-              onMouseOver={(e) => e.target.style.transform = 'scale(1.02)'}
-              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-            >
-              {loading ? 'SECURING SPOT...' : 'GET LIFETIME ACCESS NOW'}
-            </button>
-            
-            <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              🔒 100% Secure Payment via Chapa. Instant Activation.
-            </p>
-          </div>
         </div>
 
-        <div style={{ marginTop: '2rem' }}>
-          <button onClick={() => navigate('/dashboard')} className="btn btn-ghost" style={{ border: 'none', background: 'transparent' }}>
-            No thanks, I prefer risking downtime.
-          </button>
+        <div style={{ marginTop: '4rem', opacity: 0.6, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          🔒 Secure Payment via Chapa • 30-Day Money-Back Guarantee
         </div>
 
       </div>
@@ -114,17 +101,61 @@ function Upgrade() {
   );
 }
 
-function StackItem({ name, value, worth }) {
+function PricingCard({ title, price, sub, features, btnText, btnAction, isPrimary, isGhost, badge, borderColor }) {
+  const borderStyle = borderColor ? `1px solid ${borderColor}` : (isPrimary ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)');
+  const bgStyle = isPrimary 
+    ? 'linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%)' 
+    : 'rgba(30, 41, 59, 0.4)';
+  const scale = isPrimary ? 'scale(1.05)' : 'scale(1)';
+  const zIndex = isPrimary ? 10 : 1;
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.8rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div style={{ color: 'var(--success)', fontSize: '1.2rem' }}>✔</div>
-        <div>
-          <div style={{ color: 'white', fontWeight: 700, fontSize: '1.1rem' }}>{name}</div>
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{value}</div>
+    <div className="card" style={{ 
+      padding: '0', background: bgStyle, border: borderStyle, 
+      transform: scale, zIndex: zIndex, position: 'relative',
+      boxShadow: isPrimary ? '0 0 50px rgba(99, 102, 241, 0.2)' : 'none'
+    }}>
+      {badge && (
+        <div style={{ 
+          position: 'absolute', top: 0, left: '50%', transform: 'translate(-50%, -50%)', 
+          background: 'var(--primary)', color: 'white', padding: '0.5rem 1rem', 
+          borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '1px'
+        }}>
+          {badge}
         </div>
+      )}
+
+      <div style={{ padding: '2.5rem' }}>
+        <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'white', margin: '0 0 0.5rem 0' }}>{title}</h3>
+        <div style={{ fontSize: '3rem', fontWeight: 900, color: 'white', lineHeight: 1 }}>
+          {price}<span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}> ETB</span>
+        </div>
+        <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{sub}</div>
       </div>
-      <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.9rem' }}>{worth}</div>
+
+      <div style={{ padding: '0 2.5rem 2.5rem 2.5rem', textAlign: 'left' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+          {features.map((feat, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-main)' }}>
+              <span style={{ color: isPrimary ? 'var(--success)' : 'var(--text-muted)' }}>✓</span>
+              {feat}
+            </div>
+          ))}
+        </div>
+
+        <button 
+          onClick={btnAction}
+          className={isPrimary ? 'btn' : 'btn btn-ghost'}
+          style={{ 
+            width: '100%', padding: '1rem', fontWeight: 700,
+            background: isPrimary ? 'linear-gradient(90deg, var(--primary) 0%, #4f46e5 100%)' : 'transparent',
+            color: isPrimary ? 'white' : 'var(--text-main)',
+            border: isPrimary ? 'none' : '1px solid rgba(255,255,255,0.2)'
+          }}
+        >
+          {btnText}
+        </button>
+      </div>
     </div>
   );
 }

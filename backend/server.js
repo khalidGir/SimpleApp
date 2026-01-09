@@ -4,7 +4,7 @@ const { Resend } = require('resend');
 const { addUrl, startScheduler } = require('./schedule');
 const { sendAlert } = require('./alerts');
 const crypto = require('crypto');
-const { initDb, createUser, findUserByEmail, getUserUrls, upgradeUserToPro, findUserById, getPublicUserUrls, findUserByVerificationToken, verifyUser } = require('./db');
+const { initDb, createUser, findUserByEmail, getUserUrls, upgradeUserToPlan, findUserById, getPublicUserUrls, findUserByVerificationToken, verifyUser } = require('./db');
 const { hashPassword, comparePassword, generateToken, authenticateToken } = require('./auth');
 const { initializePayment, verifySignature } = require('./chapa');
 const { sendVerificationEmail } = require('./email');
@@ -57,12 +57,16 @@ app.get('/me', authenticateToken, async (req, res) => {
 
 app.post('/create-checkout-session', authenticateToken, async (req, res) => {
     try {
+        const { planType } = req.body; // Expect 'pro' or 'agency'
+        const validPlans = ['pro', 'agency'];
+        const selectedPlan = validPlans.includes(planType) ? planType : 'pro'; // Default to pro
+
         const tx_ref = `tx-${req.user.userId}-${Date.now()}`;
         // Using req.user from authenticateToken
         const checkoutInfo = await initializePayment({ 
             email: req.user.email, 
             id: req.user.userId 
-        }, tx_ref);
+        }, selectedPlan, tx_ref);
         
         res.json({ checkoutUrl: checkoutInfo.data.checkout_url });
     } catch (error) {
@@ -80,8 +84,10 @@ app.post('/chapa/webhook', async (req, res) => {
 
     if (status === 'success' && meta && meta.user_id) {
         try {
-            await upgradeUserToPro(meta.user_id, tx_ref);
-            console.log(`User ${meta.user_id} upgraded to Pro via webhook`);
+            // Default to 'pro' if plan_type is missing for legacy reasons
+            const plan = meta.plan_type || 'pro';
+            await upgradeUserToPlan(meta.user_id, plan, tx_ref);
+            console.log(`User ${meta.user_id} upgraded to ${plan} via webhook`);
         } catch (error) {
             console.error('Failed to upgrade user via webhook', error);
             return res.status(500).send('Database update failed');
