@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { API_URL } from '../utils/api';
+import SEO from '../components/SEO';
 import '../global.css';
 
 function StatusPage() {
   const { userId } = useParams();
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -49,6 +51,7 @@ function StatusPage() {
 
   return (
     <div className="deep-space-wrapper">
+      <SEO title="System Status" description="Real-time service status and incident reports." />
       <div className="container" style={{ maxWidth: '800px' }}>
         
         {/* HEADER / REACTOR CORE */}

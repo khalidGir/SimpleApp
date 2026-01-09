@@ -15,8 +15,8 @@ This document serves as the **Source of Truth** for remaining Technical and Busi
 
 ## 🟡 Priority 3: Growth & Polish (The "Scale" Pack)
 *These help you get more users.*
-- [ ] **SEO Metadata:** Proper titles/descriptions for Google Ranking.
-- [ ] **Analytics:** Tracking user behavior (PostHog/Google Analytics).
+- [x] **SEO Metadata:** Proper titles/descriptions for Google Ranking.
+- [x] **Analytics:** Tracking user behavior (PostHog/Google Analytics).
 - [ ] **Sitemap:** Help search engines find your pages.
 
 ---

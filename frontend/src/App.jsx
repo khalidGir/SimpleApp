@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -9,6 +9,7 @@ import StatusPage from './pages/StatusPage';
 import Legal from './pages/Legal';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import { initAnalytics } from './utils/analytics';
 
 // Helper for protected routes
 const PrivateRoute = ({ children }) => {
@@ -17,6 +18,10 @@ const PrivateRoute = ({ children }) => {
 };
 
 function App() {
+  useEffect(() => {
+    initAnalytics();
+  }, []);
+
   return (
     <Router>
       <Routes>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch } from '../utils/api';
+import SEO from '../components/SEO';
 import '../global.css';
 
 function Dashboard() {
@@ -88,6 +89,7 @@ function Dashboard() {
 
   return (
     <div className="deep-space-wrapper">
+      <SEO title="Orbital Command" description="Manage your monitoring infrastructure." />
       <div className="container">
         {/* HEADER */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>

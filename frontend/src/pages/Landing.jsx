@@ -1,11 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 import '../global.css';
 import './Landing.css';
 
 function Landing() {
   return (
     <div className="landing-page deep-space-wrapper">
+      <SEO 
+        title="Monitor the Galaxy" 
+        description="The world's most beautiful uptime monitoring platform. Real-time tracking, instant alerts, and holographic public status pages." 
+      />
       {/* HERO SECTION */}
       <section className="hero">
         <div className="container">
