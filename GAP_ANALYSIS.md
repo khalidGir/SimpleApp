@@ -8,9 +8,8 @@ This document serves as the **Source of Truth** for remaining Technical and Busi
 - [x] **Legal Pages:** Terms of Service & Privacy Policy (Required by Payment Processors).
 - [ ] **Secure Headers:** Basic Helmet/CORS hardening.
 
-## 🟠 Priority 2: Reliability & Maintenance (The "Day 2" Pack)
-*These prevent the system from breaking as it grows.*
-- [ ] **Data Cleanup:** Auto-delete ping history older than 30 days to save DB space.
+## 2. Maintenance & Support
+- [x] **Data Cleanup:** Auto-delete ping history older than 30 days to save DB space.
 - [ ] **Password Reset:** Automated email flow for lost passwords.
 - [ ] **Error Logging:** System to track crashes in production.
 

@@ -47,6 +47,18 @@ const initDb = async () => {
     await pool.query(alterUsersTable);
     await pool.query(createMonitoredUrlsTable);
     await pool.query(alterMonitoredUrlsTable);
+
+    const createPingLogsTable = `
+      CREATE TABLE IF NOT EXISTS ping_logs (
+        id SERIAL PRIMARY KEY,
+        url_id INT REFERENCES monitored_urls(id) ON DELETE CASCADE,
+        status BOOLEAN NOT NULL,
+        response_time_ms INTEGER,
+        checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    await pool.query(createPingLogsTable);
+
     console.log('Database initialized: tables checked/created.');
   } catch (err) {
     console.error('Error initializing database:', err);
@@ -132,5 +144,10 @@ const verifyUser = async (userId) => {
   await pool.query(query, [userId]);
 };
 
-module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls, findUserById, upgradeUserToPlan, getPublicUserUrls, findUserByVerificationToken, verifyUser };
+const savePingLog = async (urlId, status, responseTimeMs) => {
+  const query = 'INSERT INTO ping_logs (url_id, status, response_time_ms) VALUES ($1, $2, $3)';
+  await pool.query(query, [urlId, status, responseTimeMs]);
+};
+
+module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls, findUserById, upgradeUserToPlan, getPublicUserUrls, findUserByVerificationToken, verifyUser, savePingLog };
 

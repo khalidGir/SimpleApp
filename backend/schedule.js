@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const { sendAlert } = require('./alerts');
-const { pool } = require('./db');
+const { pool, savePingLog } = require('./db');
 
 const addUrl = async (url, name = 'Manual Check', userId = null) => {
     // 0. Check Limits (Guardrails)
@@ -92,7 +92,14 @@ const checkUrl = async (entry) => {
     }
     const duration = Date.now() - start;
 
-    // 2. Alert Logic (State Change Only)
+    // 2. Save Historical Log
+    try {
+        await savePingLog(id, success, duration);
+    } catch (err) {
+        console.error(`Failed to save ping log for ${url}:`, err);
+    }
+
+    // 3. Alert Logic (State Change Only)
     // Send alert ONLY if it was UP (true) and is now DOWN (false)
     let alertSent = false;
     if (!success && last_status === true) {
@@ -141,7 +148,23 @@ const startScheduler = () => {
     console.log('Scheduler started: Running every minute to check due URLs.');
 };
 
+const startCleanupJob = () => {
+    // Run every day at midnight
+    cron.schedule('0 0 * * *', async () => {
+        console.log('Running maintenance: Cleaning up old ping logs...');
+        try {
+            const query = "DELETE FROM ping_logs WHERE checked_at < NOW() - INTERVAL '30 days'";
+            const res = await pool.query(query);
+            console.log(`Cleanup complete: Removed ${res.rowCount} old log entries.`);
+        } catch (err) {
+            console.error('Maintenance failed:', err);
+        }
+    });
+    console.log('Maintenance Scheduler started: Cleaning logs older than 30 days daily.');
+};
+
 module.exports = {
     addUrl,
-    startScheduler
+    startScheduler,
+    startCleanupJob
 };
