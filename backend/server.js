@@ -8,14 +8,34 @@ const { initDb, createUser, findUserByEmail, getUserUrls, upgradeUserToPlan, fin
 const { hashPassword, comparePassword, generateToken, authenticateToken } = require('./auth');
 const { initializePayment, verifySignature } = require('./chapa');
 const { sendVerificationEmail } = require('./email');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-// Note: resend instance in server.js was unused or redundant if we use email.js/alerts.js. 
-// Removing the top-level Resend init here to avoid the crash.
+
+// Security: Rate Limiting
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 requests per windowMs
+    message: { error: "Too many attempts, please try again after 15 minutes" },
+    standardHeaders: true, 
+    legacyHeaders: false,
+});
+
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100, // Limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 app.use(cors());
 app.use(express.json());
+
+// Apply global API limit (except auth)
+app.use('/urls', apiLimiter);
+app.use('/check', apiLimiter);
+app.use('/me', apiLimiter);
 
 // Public Status Page Endpoint
 app.get('/status-page/:userId', async (req, res) => {
@@ -106,7 +126,7 @@ app.get('/urls', authenticateToken, async (req, res) => {
     }
 });
 
-app.post('/register', async (req, res) => {
+app.post('/register', authLimiter, async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
@@ -163,7 +183,7 @@ app.get('/verify-email', async (req, res) => {
     }
 });
 
-app.post('/login', async (req, res) => {
+app.post('/login', authLimiter, async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });

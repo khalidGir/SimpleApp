@@ -61,6 +61,10 @@ function Landing() {
       {/* FOOTER */}
       <footer className="landing-footer">
         <div className="container">
+          <div style={{ marginBottom: '1rem', display: 'flex', gap: '2rem', justifyContent: 'center' }}>
+            <Link to="/terms" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }}>Terms of Service</Link>
+            <Link to="/privacy" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }}>Privacy Policy</Link>
+          </div>
           <p style={{ letterSpacing: '2px', fontSize: '0.8rem' }}>
             &copy; 2026 SIMPLE MONITOR. ALL SYSTEMS NOMINAL.
           </p>
