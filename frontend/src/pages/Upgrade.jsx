@@ -1,86 +1,118 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../utils/api';
+import '../global.css';
 
 function Upgrade() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleUpgrade = async () => {
     setLoading(true);
-    setError(null);
     try {
-      const data = await authFetch('/create-checkout-session', {
+      const response = await authFetch('/create-checkout-session', {
         method: 'POST'
       });
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        throw new Error('No checkout URL returned');
-      }
-    } catch (err) {
-      setError(err.message);
+      // Redirect to Chapa checkout
+      window.location.href = response.checkoutUrl;
+    } catch (error) {
+      alert('Upgrade initialization failed: ' + error.message);
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '50px auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <button onClick={() => navigate('/dashboard')} style={{ marginBottom: '20px', cursor: 'pointer', background: 'none', border: 'none', color: '#0070f3' }}>
-        &larr; Back to Dashboard
-      </button>
-      
-      <div style={{ border: '1px solid #ddd', borderRadius: '10px', padding: '30px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '10px' }}>Upgrade to Pro</h1>
-        <p style={{ textAlign: 'center', color: '#666', marginBottom: '30px' }}>Unlock the full potential of SimpleMonitor</p>
-
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
-          <div style={{ flex: 1, padding: '20px', background: '#f9f9f9', borderRadius: '8px', opacity: 0.7 }}>
-            <h3>Free Plan</h3>
-            <ul style={{ paddingLeft: '20px', lineHeight: '1.6' }}>
-              <li>5 Monitored URLs</li>
-              <li>5-minute Check Interval</li>
-              <li>Basic Email Alerts</li>
-            </ul>
-          </div>
-          <div style={{ flex: 1, padding: '20px', background: '#e6fffa', borderRadius: '8px', border: '2px solid #38b2ac' }}>
-            <h3 style={{ color: '#2c7a7b' }}>Pro Plan</h3>
-            <ul style={{ paddingLeft: '20px', lineHeight: '1.6' }}>
-              <li><strong>50 Monitored URLs</strong></li>
-              <li><strong>1-minute Check Interval</strong></li>
-              <li>Priority Support</li>
-            </ul>
-            <div style={{ marginTop: '20px', fontSize: '24px', fontWeight: 'bold', color: '#2c7a7b' }}>
-              100 ETB <span style={{ fontSize: '14px', fontWeight: 'normal' }}>/ lifetime</span>
-            </div>
-          </div>
+    <div className="deep-space-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="container" style={{ textAlign: 'center' }}>
+        
+        {/* HEADER */}
+        <div style={{ marginBottom: '3rem' }}>
+          <h1 className="text-glow" style={{ fontSize: '3rem', fontWeight: 900, marginBottom: '1rem', background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            UNLOCK FULL CLEARANCE
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto' }}>
+            Scale your monitoring infrastructure to orbital levels.
+          </p>
         </div>
 
-        {error && <div style={{ color: 'red', textAlign: 'center', marginBottom: '15px' }}>{error}</div>}
+        {/* THE PRO CARD */}
+        <div className="card" style={{ 
+          maxWidth: '500px', margin: '0 auto', padding: '3rem', 
+          background: 'linear-gradient(180deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%)',
+          border: '1px solid rgba(99, 102, 241, 0.3)',
+          boxShadow: '0 0 50px rgba(99, 102, 241, 0.15)',
+          position: 'relative', overflow: 'hidden'
+        }}>
+          {/* Glowing Border Effect */}
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', background: 'linear-gradient(90deg, var(--primary), #4f46e5)' }}></div>
 
-        <button 
-          onClick={handleUpgrade}
-          disabled={loading}
-          style={{ 
-            width: '100%', 
-            padding: '15px', 
-            backgroundColor: '#38b2ac', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '6px', 
-            fontSize: '18px',
-            fontWeight: 'bold',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1
-          }}
-        >
-          {loading ? 'Redirecting to Payment...' : 'Upgrade Now'}
-        </button>
-        <p style={{ textAlign: 'center', fontSize: '12px', color: '#999', marginTop: '15px' }}>
-          Secured by Chapa
-        </p>
+          <div style={{ marginBottom: '2rem' }}>
+            <span style={{ 
+              background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', 
+              padding: '0.5rem 1rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '2px' 
+            }}>
+              PRO TIER
+            </span>
+          </div>
+
+          <div style={{ fontSize: '4rem', fontWeight: 800, color: 'white', marginBottom: '0.5rem', lineHeight: 1 }}>
+            100 <span style={{ fontSize: '1.5rem', color: 'var(--text-muted)' }}>ETB</span>
+          </div>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '3rem' }}>One-time activation fee</p>
+
+          <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
+            <FeatureRow text="Monitor up to 50 Targets" />
+            <FeatureRow text="1-Minute Rapid Pings" />
+            <FeatureRow text="Priority SMS/Email Alerts" />
+            <FeatureRow text="Public Status Page Access" />
+            <FeatureRow text="Advanced Latency Analytics" />
+          </div>
+
+          <button 
+            onClick={handleUpgrade} 
+            className="btn btn-primary"
+            disabled={loading}
+            style={{ 
+              width: '100%', padding: '1.25rem', fontSize: '1.1rem', 
+              background: 'linear-gradient(90deg, var(--primary) 0%, #4f46e5 100%)',
+              boxShadow: '0 10px 30px rgba(79, 70, 229, 0.4)'
+            }}
+          >
+            {loading ? (
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                <span className="spinner"></span> INITIALIZING...
+              </span>
+            ) : (
+              'INITIATE UPGRADE'
+            )}
+          </button>
+          
+          <div style={{ marginTop: '1.5rem' }}>
+            <button onClick={() => navigate('/dashboard')} className="btn btn-ghost" style={{ border: 'none', background: 'transparent' }}>
+              Return to Command
+            </button>
+          </div>
+        </div>
+        
+        <div style={{ marginTop: '3rem', opacity: 0.5, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          SECURE PAYMENT ENCRYPTION ENABLED via CHAPA
+        </div>
       </div>
+    </div>
+  );
+}
+
+function FeatureRow({ text }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--text-main)' }}>
+      <div style={{ 
+        width: '24px', height: '24px', borderRadius: '50%', 
+        background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem'
+      }}>
+        ✓
+      </div>
+      <span style={{ fontSize: '1rem' }}>{text}</span>
     </div>
   );
 }
