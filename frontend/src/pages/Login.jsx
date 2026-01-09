@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { publicFetch } from '../utils/api';
-import './Auth.css'; // Assuming we share styles
+import './Auth.css';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -44,10 +44,15 @@ function Login() {
       <Link to="/" className="auth-logo">SimpleMonitor.</Link>
 
       <div className="auth-container">
-        <h2>Login</h2>
-        {success && <div style={{ color: 'green', marginBottom: '10px', padding: '10px', backgroundColor: '#f0fff4', borderRadius: '4px' }}>{success}</div>}
-        {error && <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <div className="auth-header">
+          <h2>Welcome Back</h2>
+          <p>Enter your credentials to access the command center.</p>
+        </div>
+
+        {success && <div className="success-message">{success}</div>}
+        {error && <div className="error-message">{error}</div>}
+        
+        <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>
             <input
@@ -76,10 +81,10 @@ function Login() {
           <div className="auth-actions">
             <button
               type="submit"
-              className="btn-black btn-full"
+              className="btn-full"
               disabled={loading}
             >
-              {loading ? 'Logging in...' : 'Sign In'}
+              {loading ? 'Authenticating...' : 'Sign In'}
             </button>
           </div>
         </form>
