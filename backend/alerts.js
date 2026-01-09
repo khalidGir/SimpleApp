@@ -1,6 +1,9 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Safely initialize Resend (prevent crash if key is missing)
+const resend = process.env.RESEND_API_KEY 
+    ? new Resend(process.env.RESEND_API_KEY) 
+    : null;
 
 /**
  * Sends an alert email using Resend.
@@ -9,9 +12,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  * @param {string} message - The details of the alert.
  */
 const sendAlert = async (url, subject, message) => {
-    if (!process.env.RESEND_API_KEY || !process.env.ALERT_EMAIL) {
-        console.warn('Resend API Key or Alert Email not set. Skipping email alert.');
-        console.log(`[ALERT Would Be Sent] Subject: ${subject}, Body: ${message}`);
+    if (!resend || !process.env.ALERT_EMAIL) {
+        console.warn('[System] Email alerts disabled (Missing Key or Email).');
+        console.log(`[ALERT LOG] Subject: ${subject}`);
         return;
     }
 

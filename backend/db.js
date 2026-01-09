@@ -26,50 +26,20 @@ const initDb = async () => {
   `;
 
   const alterMonitoredUrlsTable = `
-    DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='monitored_urls' AND column_name='user_id') THEN
-            ALTER TABLE monitored_urls ADD COLUMN user_id INT REFERENCES users(id);
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='monitored_urls' AND column_name='last_status') THEN
-            ALTER TABLE monitored_urls ADD COLUMN last_status BOOLEAN DEFAULT TRUE;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='monitored_urls' AND column_name='last_alert_sent_at') THEN
-            ALTER TABLE monitored_urls ADD COLUMN last_alert_sent_at TIMESTAMP;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='monitored_urls' AND column_name='last_response_time_ms') THEN
-            ALTER TABLE monitored_urls ADD COLUMN last_response_time_ms INTEGER;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='monitored_urls' AND column_name='last_checked_at') THEN
-            ALTER TABLE monitored_urls ADD COLUMN last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-        END IF;
-    END
-    $$;
+    ALTER TABLE monitored_urls ADD COLUMN IF NOT EXISTS user_id INT REFERENCES users(id);
+    ALTER TABLE monitored_urls ADD COLUMN IF NOT EXISTS last_status BOOLEAN DEFAULT TRUE;
+    ALTER TABLE monitored_urls ADD COLUMN IF NOT EXISTS last_alert_sent_at TIMESTAMP;
+    ALTER TABLE monitored_urls ADD COLUMN IF NOT EXISTS last_response_time_ms INTEGER;
+    ALTER TABLE monitored_urls ADD COLUMN IF NOT EXISTS last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
   `;
 
   const alterUsersTable = `
-    DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='plan') THEN
-            ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free';
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='max_urls') THEN
-            ALTER TABLE users ADD COLUMN max_urls INTEGER DEFAULT 5;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='check_interval_seconds') THEN
-            ALTER TABLE users ADD COLUMN check_interval_seconds INTEGER DEFAULT 300;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='chapa_payment_id') THEN
-            ALTER TABLE users ADD COLUMN chapa_payment_id TEXT;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_verified') THEN
-            ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE;
-        END IF;
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='verification_token') THEN
-            ALTER TABLE users ADD COLUMN verification_token TEXT;
-        END IF;
-    END
-    $$;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS max_urls INTEGER DEFAULT 5;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS check_interval_seconds INTEGER DEFAULT 300;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS chapa_payment_id TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT;
   `;
 
   try {

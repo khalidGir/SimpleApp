@@ -11,7 +11,8 @@ const { sendVerificationEmail } = require('./email');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Note: resend instance in server.js was unused or redundant if we use email.js/alerts.js. 
+// Removing the top-level Resend init here to avoid the crash.
 
 app.use(cors());
 app.use(express.json());

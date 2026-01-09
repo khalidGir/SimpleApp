@@ -1,6 +1,9 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY 
+    ? new Resend(process.env.RESEND_API_KEY) 
+    : null;
+
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const API_URL = process.env.API_URL || 'http://localhost:5000';
 
@@ -9,7 +12,10 @@ const sendVerificationEmail = async (email, token) => {
     // which then redirects to frontend.
     const verifyLink = `${API_URL}/verify-email?token=${token}`;
 
-    if (!process.env.RESEND_API_KEY) {
+    // Always log the link in development so we don't get locked out
+    console.log(`[VERIFY LINK]: ${verifyLink}`);
+
+    if (!resend) {
         console.log(`[DEV] Verification Email to ${email}: ${verifyLink}`);
         return;
     }
