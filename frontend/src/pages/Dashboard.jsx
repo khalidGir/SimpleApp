@@ -61,7 +61,6 @@ function Dashboard() {
         method: 'POST',
         body: JSON.stringify({ url })
       });
-      // In a real app, we'd update just this item in state
       fetchData(); 
     } catch (e) {
       alert('Check failed: ' + e.message);
@@ -75,7 +74,11 @@ function Dashboard() {
     navigate('/login');
   };
 
-  if (loading) return <div className="container" style={{textAlign:'center', marginTop: '20vh'}}>Loading Command Interface...</div>;
+  if (loading) return (
+    <div className="deep-space-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="text-glow" style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>INITIALIZING COMMAND LINK...</div>
+    </div>
+  );
 
   // Stats Calculation
   const totalServices = urls.length;
@@ -84,108 +87,129 @@ function Dashboard() {
   const systemHealth = totalServices === 0 ? 100 : Math.round((upServices / totalServices) * 100);
 
   return (
-    <div className="container">
-      {/* HEADER */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div className="status-dot up" style={{ width: '12px', height: '12px' }}></div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>Orbital Command</h1>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-              {user?.email} • <span style={{ color: user?.plan === 'pro' ? 'var(--warning)' : 'var(--text-muted)' }}>
-                {user?.plan === 'pro' ? 'PRO PLAN' : 'FREE TIER'}
-              </span>
-            </p>
+    <div className="deep-space-wrapper">
+      <div className="container">
+        {/* HEADER */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ 
+              width: '40px', height: '40px', 
+              background: 'linear-gradient(135deg, var(--primary), #4f46e5)', 
+              borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)'
+            }}>
+              <div style={{ width: '12px', height: '12px', background: 'white', borderRadius: '50%' }}></div>
+            </div>
+            <div>
+              <h1 className="text-glow" style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.5px' }}>Orbital Command</h1>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', letterSpacing: '0.5px', textTransform: 'uppercase', fontWeight: 600 }}>
+                {user?.plan === 'pro' ? <span style={{ color: 'var(--warning)', textShadow: '0 0 10px rgba(245, 158, 11, 0.4)' }}>PRO CLEARANCE</span> : 'FREE TIER'}
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            {user?.plan !== 'pro' && (
+               <button onClick={() => navigate('/upgrade')} className="btn btn-primary">Upgrade Clearance</button>
+            )}
+            <a href={`/status/${user?.id}`} target="_blank" rel="noreferrer" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600, transition: 'color 0.2s' }} onMouseOver={e => e.target.style.color = 'white'} onMouseOut={e => e.target.style.color = '#94a3b8'}>
+              Public Beacon &rarr;
+            </a>
+            <button onClick={handleLogout} className="btn btn-ghost">
+              Abort Session
+            </button>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          {user?.plan !== 'pro' && (
-             <button onClick={() => navigate('/upgrade')} className="btn btn-primary">Upgrade</button>
-          )}
-          <a href={`/status/${user?.id}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', fontSize: '0.9rem' }}>
-            Public Status &rarr;
-          </a>
-          <button onClick={handleLogout} className="btn btn-ghost" style={{ border: '1px solid var(--error)', color: 'var(--error)' }}>
-            Logout
+
+        {/* STATS ROW */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+          <div className="card">
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' }}>System Integrity</div>
+            <div className={`text-glow-${systemHealth === 100 ? 'success' : 'error'}`} style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1 }}>
+              {systemHealth}%
+            </div>
+          </div>
+          <div className="card">
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' }}>Active Targets</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1 }}>
+              {totalServices} <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)', fontWeight: 500 }}>/ {user?.max_urls}</span>
+            </div>
+          </div>
+          <div className="card">
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.75rem' }}>Avg Signal Latency</div>
+            <div className={avgLatency < 200 ? 'text-glow-success' : 'text-glow-error'} style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1 }}>
+              {Math.round(avgLatency)}<span style={{fontSize: '1rem'}}>ms</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ADD SERVICE */}
+        <div className="card" style={{ marginBottom: '3rem', display: 'flex', gap: '1rem', alignItems: 'center', padding: '1rem', background: 'rgba(30, 41, 59, 0.6)' }}>
+          <div style={{ flex: 1 }}>
+            <input 
+              type="text" 
+              className="input-field" 
+              placeholder="Enter Target URL (e.g. https://google.com)" 
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              style={{ background: 'transparent', border: 'none', boxShadow: 'none', fontSize: '1.1rem' }}
+            />
+          </div>
+          <button onClick={handleAddUrl} className="btn btn-primary" style={{ minWidth: '140px' }}>
+            {addLoading ? <span className="spinner"></span> : '+ Initialize'}
           </button>
         </div>
-      </div>
 
-      {/* STATS ROW */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-        <div className="card">
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>System Health</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: systemHealth === 100 ? 'var(--success)' : 'var(--error)' }}>
-            {systemHealth}%
-          </div>
-        </div>
-        <div className="card">
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Active Monitors</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-            {totalServices} <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 400 }}>/ {user?.max_urls}</span>
-          </div>
-        </div>
-        <div className="card">
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Avg Latency</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: avgLatency < 200 ? 'var(--success)' : 'var(--warning)' }}>
-            {Math.round(avgLatency)}ms
-          </div>
-        </div>
-      </div>
+        {/* SERVICE GRID */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
+          {urls.map((item) => (
+            <div key={item.id} className="card" style={{ position: 'relative', overflow: 'hidden' }}>
+              {/* Status Bar */}
+              <div style={{ 
+                position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', 
+                background: item.last_status ? 'var(--success)' : 'var(--error)',
+                boxShadow: item.last_status ? '0 0 15px var(--success)' : '0 0 15px var(--error)'
+              }}></div>
 
-      {/* ADD SERVICE */}
-      <div className="card" style={{ marginBottom: '2rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <input 
-          type="text" 
-          className="input-field" 
-          placeholder="https://example.com" 
-          value={newUrl}
-          onChange={(e) => setNewUrl(e.target.value)}
-        />
-        <button onClick={handleAddUrl} className="btn btn-primary" style={{ minWidth: '120px' }}>
-          {addLoading ? <span className="spinner"></span> : 'Add Target'}
-        </button>
-      </div>
-
-      {/* SERVICE GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-        {urls.map((item) => (
-          <div key={item.id} className="card" style={{ position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem' }}>
-              <div className={`status-dot ${item.last_status ? 'up' : 'down'}`}></div>
-            </div>
-            
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', paddingRight: '20px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {item.name || item.url.replace('https://', '')}
-            </h3>
-            <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {item.url}
-            </p>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
-              <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>LATENCY</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
-                  {item.last_response_time_ms ? `${item.last_response_time_ms}ms` : '—'}
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1.5rem', paddingLeft: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>
+                  {item.name || item.url.replace('https://', '')}
+                </h3>
+                <div className={`status-dot ${item.last_status ? 'up' : 'down'}`}></div>
               </div>
-              <button 
-                onClick={() => handleCheck(item.url)} 
-                className="btn btn-ghost"
-                disabled={checkLoading === item.url}
-              >
-                {checkLoading === item.url ? <span className="spinner" style={{borderColor: '#94a3b8', borderTopColor: 'transparent'}}></span> : 'Ping'}
-              </button>
+
+              <div style={{ paddingLeft: '1rem', marginBottom: '2rem' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>TARGET URL</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.url}</div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', paddingLeft: '1rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>RESPONSE TIME</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>
+                    {item.last_response_time_ms ? `${item.last_response_time_ms}ms` : '—'}
+                  </div>
+                </div>
+                <button 
+                  onClick={() => handleCheck(item.url)} 
+                  className="btn btn-ghost"
+                  disabled={checkLoading === item.url}
+                  style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
+                >
+                  {checkLoading === item.url ? <span className="spinner" style={{width: '12px', height: '12px'}}></span> : 'PING'}
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-      
-      {urls.length === 0 && (
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '2rem' }}>
-          No targets acquired. Initialize monitoring above.
+          ))}
         </div>
-      )}
+        
+        {urls.length === 0 && (
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '4rem', padding: '4rem', border: '1px dashed var(--border)', borderRadius: '16px' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '1rem', opacity: 0.5 }}>📡</div>
+            <h3 style={{ margin: '0 0 0.5rem 0', color: 'white' }}>No Active Scans</h3>
+            <p>Initialize a new target above to begin monitoring sequence.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
