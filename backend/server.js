@@ -4,10 +4,10 @@ const { Resend } = require('resend');
 const { addUrl, startScheduler } = require('./schedule');
 const { sendAlert } = require('./alerts');
 const crypto = require('crypto');
-const { initDb, createUser, findUserByEmail, getUserUrls, upgradeUserToPlan, findUserById, getPublicUserUrls, findUserByVerificationToken, verifyUser } = require('./db');
+const { initDb, createUser, findUserByEmail, getUserUrls, upgradeUserToPlan, findUserById, getPublicUserUrls, findUserByVerificationToken, verifyUser, setResetToken, findUserByResetToken, updatePassword } = require('./db');
 const { hashPassword, comparePassword, generateToken, authenticateToken } = require('./auth');
 const { initializePayment, verifySignature } = require('./chapa');
-const { sendVerificationEmail } = require('./email');
+const { sendVerificationEmail, sendResetPasswordEmail } = require('./email');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
@@ -180,6 +180,48 @@ app.get('/verify-email', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).send('Verification failed');
+    }
+});
+
+app.post('/forgot-password', authLimiter, async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    try {
+        const user = await findUserByEmail(email);
+        if (!user) {
+            // Don't reveal if user exists for security, but we'll be nice here
+            return res.json({ message: 'If an account exists with that email, a reset link has been sent.' });
+        }
+
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiry = new Date(Date.now() + 3600000); // 1 hour
+
+        await setResetToken(email, token, expiry);
+        await sendResetPasswordEmail(email, token);
+
+        res.json({ message: 'If an account exists with that email, a reset link has been sent.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to process request' });
+    }
+});
+
+app.post('/reset-password', authLimiter, async (req, res) => {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ error: 'Token and password are required' });
+
+    try {
+        const user = await findUserByResetToken(token);
+        if (!user) return res.status(400).json({ error: 'Invalid or expired token' });
+
+        const hashedPassword = await hashPassword(password);
+        await updatePassword(user.id, hashedPassword);
+
+        res.json({ message: 'Password updated successfully. You can now log in.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to reset password' });
     }
 });
 

@@ -40,6 +40,8 @@ const initDb = async () => {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS chapa_payment_id TEXT;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry TIMESTAMP;
   `;
 
   try {
@@ -144,10 +146,26 @@ const verifyUser = async (userId) => {
   await pool.query(query, [userId]);
 };
 
+const setResetToken = async (email, token, expiry) => {
+  const query = 'UPDATE users SET reset_token = $2, reset_token_expiry = $3 WHERE email = $1';
+  await pool.query(query, [email, token, expiry]);
+};
+
+const findUserByResetToken = async (token) => {
+  const query = 'SELECT * FROM users WHERE reset_token = $1 AND reset_token_expiry > NOW()';
+  const res = await pool.query(query, [token]);
+  return res.rows[0];
+};
+
+const updatePassword = async (userId, hashedPassword) => {
+  const query = 'UPDATE users SET password_hash = $2, reset_token = NULL, reset_token_expiry = NULL WHERE id = $1';
+  await pool.query(query, [userId, hashedPassword]);
+};
+
 const savePingLog = async (urlId, status, responseTimeMs) => {
   const query = 'INSERT INTO ping_logs (url_id, status, response_time_ms) VALUES ($1, $2, $3)';
   await pool.query(query, [urlId, status, responseTimeMs]);
 };
 
-module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls, findUserById, upgradeUserToPlan, getPublicUserUrls, findUserByVerificationToken, verifyUser, savePingLog };
+module.exports = { pool, initDb, createUser, findUserByEmail, getUserUrls, findUserById, upgradeUserToPlan, getPublicUserUrls, findUserByVerificationToken, verifyUser, savePingLog, setResetToken, findUserByResetToken, updatePassword };
 

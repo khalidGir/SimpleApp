@@ -7,6 +7,8 @@ import Landing from './pages/Landing';
 import Upgrade from './pages/Upgrade';
 import StatusPage from './pages/StatusPage';
 import Legal from './pages/Legal';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Helper for protected routes
 const PrivateRoute = ({ children }) => {
@@ -21,6 +23,8 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/status/:userId" element={<StatusPage />} />
         <Route path="/terms" element={<Legal />} />
         <Route path="/privacy" element={<Legal />} />

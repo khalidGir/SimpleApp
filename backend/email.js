@@ -38,4 +38,34 @@ const sendVerificationEmail = async (email, token) => {
     }
 };
 
-module.exports = { sendVerificationEmail };
+const sendResetPasswordEmail = async (email, token) => {
+    const resetLink = `${FRONTEND_URL}/reset-password?token=${token}`;
+
+    // Always log the link in development
+    console.log(`[RESET LINK]: ${resetLink}`);
+
+    if (!resend) {
+        console.log(`[DEV] Reset Email to ${email}: ${resetLink}`);
+        return;
+    }
+
+    try {
+        await resend.emails.send({
+            from: 'SimpleApp <onboarding@resend.dev>',
+            to: email,
+            subject: 'Reset your SimpleApp Password',
+            html: `
+                <h2>Password Reset Request</h2>
+                <p>You requested a password reset. Click the link below to set a new password:</p>
+                <a href="${resetLink}" style="padding: 10px 20px; background-color: #6366f1; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a>
+                <p>If you did not request this, please ignore this email.</p>
+                <p>Link: ${resetLink}</p>
+            `
+        });
+        console.log(`Reset email sent to ${email}`);
+    } catch (error) {
+        console.error('Failed to send reset email:', error);
+    }
+};
+
+module.exports = { sendVerificationEmail, sendResetPasswordEmail };
