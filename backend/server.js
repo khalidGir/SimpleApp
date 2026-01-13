@@ -18,7 +18,7 @@ const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 10, // Limit each IP to 10 requests per windowMs
     message: { error: "Too many attempts, please try again after 15 minutes" },
-    standardHeaders: true, 
+    standardHeaders: true,
     legacyHeaders: false,
 });
 
@@ -61,7 +61,14 @@ app.get('/status-page/:userId', async (req, res) => {
 
 // Initialize DB (ensure tables exist)
 initDb();
-// Note: Scheduler is now run by worker.js
+
+// Optional: Run worker tasks in the same process (simple PaaS deployment)
+if (process.env.ENABLE_WORKER === 'true') {
+    console.log('Running Worker Tasks in Server Process...');
+    const { startCleanupJob } = require('./schedule');
+    startScheduler();
+    startCleanupJob();
+}
 
 app.get('/me', authenticateToken, async (req, res) => {
     try {
@@ -83,11 +90,11 @@ app.post('/create-checkout-session', authenticateToken, async (req, res) => {
 
         const tx_ref = `tx-${req.user.userId}-${Date.now()}`;
         // Using req.user from authenticateToken
-        const checkoutInfo = await initializePayment({ 
-            email: req.user.email, 
-            id: req.user.userId 
+        const checkoutInfo = await initializePayment({
+            email: req.user.email,
+            id: req.user.userId
         }, selectedPlan, tx_ref);
-        
+
         res.json({ checkoutUrl: checkoutInfo.data.checkout_url });
     } catch (error) {
         console.error('Checkout error:', error);
@@ -99,7 +106,7 @@ app.post('/chapa/webhook', async (req, res) => {
     // Note: Signature verification ideally needs raw body
     // For now, checking status and meta
     const { status, tx_ref, meta } = req.body;
-    
+
     console.log('Chapa Webhook received:', req.body);
 
     if (status === 'success' && meta && meta.user_id) {
@@ -113,7 +120,7 @@ app.post('/chapa/webhook', async (req, res) => {
             return res.status(500).send('Database update failed');
         }
     }
-    
+
     res.status(200).send('OK');
 });
 
@@ -140,7 +147,7 @@ app.post('/register', authLimiter, async (req, res) => {
 
         const hashedPassword = await hashPassword(password);
         const user = await createUser(email, hashedPassword);
-        
+
         // Generate and save verification token
         const token = crypto.randomBytes(32).toString('hex');
         // We need to import pool to run this raw query, or add a helper.
@@ -154,9 +161,9 @@ app.post('/register', authLimiter, async (req, res) => {
         // Send Email
         await sendVerificationEmail(email, token);
 
-        res.status(201).json({ 
-            message: 'User created. Please check your email to verify your account.', 
-            user: { id: user.id, email: user.email } 
+        res.status(201).json({
+            message: 'User created. Please check your email to verify your account.',
+            user: { id: user.id, email: user.email }
         });
     } catch (error) {
         console.error(error);
@@ -173,7 +180,7 @@ app.get('/verify-email', async (req, res) => {
         if (!user) return res.status(400).send('Invalid or expired token');
 
         await verifyUser(user.id);
-        
+
         // Redirect to frontend login with success flag
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         res.redirect(`${frontendUrl}/login?verified=true`);
@@ -239,7 +246,7 @@ app.post('/login', authLimiter, async (req, res) => {
 
         // Check verification status
         if (!user.is_verified) {
-             return res.status(403).json({ error: 'Please verify your email address before logging in.' });
+            return res.status(403).json({ error: 'Please verify your email address before logging in.' });
         }
 
         const isMatch = await comparePassword(password, user.password_hash);
@@ -266,7 +273,7 @@ app.post('/add-url', authenticateToken, async (req, res) => {
     if (!url || typeof url !== 'string' || !url.startsWith('https://')) {
         return res.status(400).json({ error: 'Invalid URL. Must start with https://' });
     }
-    
+
     try {
         // Assuming default name for now, or could accept from body
         await addUrl(url, 'User Monitored', req.user.userId);
@@ -281,9 +288,9 @@ app.post('/add-url', authenticateToken, async (req, res) => {
 
 app.post('/check', authenticateToken, async (req, res) => {
     if (process.env.ENABLE_CHECK_ENDPOINT !== 'true') {
-        return res.status(403).json({ 
-            error: 'Check endpoint is disabled', 
-            timestamp: new Date().toISOString() 
+        return res.status(403).json({
+            error: 'Check endpoint is disabled',
+            timestamp: new Date().toISOString()
         });
     }
 
@@ -324,7 +331,7 @@ app.post('/check', authenticateToken, async (req, res) => {
             `ALERT: ${checkName} Network Error`,
             `URL: ${url}\nError: ${error.message}\nTime: ${new Date().toISOString()}`
         );
-        
+
         res.json({
             name: checkName,
             url: url,
